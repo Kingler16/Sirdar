@@ -72,6 +72,12 @@ _RECENT_WORKOUTS = 12
 # Wie viele Tage der Last-Serie (für TSB-Trend) in den Kontext fließen.
 _LOAD_TREND_DAYS = 14
 
+# Planungsfenster für externe Kontextdaten (Wetter/Kalender). Großzügig genug für
+# den größten Horizont (block ≈ 4 Wochen); Wetter wird intern auf die 16-Tage-
+# Grenze der Open-Meteo-API begrenzt, der Rest des Plans läuft ohne Wetter.
+_WEATHER_FORECAST_DAYS = 14
+_CALENDAR_WINDOW_DAYS = 28
+
 
 # ════════════════════════════════════════════════════════════════════════════
 #  SYSTEM PROMPT (KONZEPT §6 — sorgfältig; der Haupt-Agent reviewt diesen genau)
@@ -86,8 +92,9 @@ Hype, keine Phrasen, keine Emoji-Flut.
 
 Du erhältst als Kontext ein JSON mit: Profil, aktivierten Sportarten inkl. Ist-Zustand \
 (Geräte, aktuelle Übungen + Gewichte, FTP, Wochenstunden), Zielen, letzten Workouts, \
-aktueller Trainingslast (CTL/ATL/TSB), Wochen-TSS, heutiger Readiness und Settings \
-(Ton, Autonomie, Horizont). Plane ausschließlich auf Basis dieser Daten.
+aktueller Trainingslast (CTL/ATL/TSB), Wochen-TSS, heutiger Readiness, Settings \
+(Ton, Autonomie, Horizont) und — falls verfügbar — externem Kontext (Wetter-Forecast \
+und Kalender-Termine). Plane ausschließlich auf Basis dieser Daten.
 
 ══════════════════════════════════════════════════════════════════════════════
 TRAININGSWISSENSCHAFTLICHES REGELWERK (verbindlich)
@@ -150,6 +157,17 @@ READINESS-BEWUSSTSEIN (Tagesform-Ampel)
 ZIEL-PRIORISIERUNG
 - Genau EIN Primärziel treibt die Periodisierung. Alle weiteren Ziele laufen auf
   Maintenance (Erhalt), bis das Primärziel erreicht/abgeschlossen ist.
+
+EXTERNER KONTEXT (Wetter & Kalender) — falls im Kontext vorhanden
+- Wetter ("weather", Tages-Forecast): bei Regen (precipitation/precip_probability hoch)
+  oder starkem Wind (wind_max/Böen) Outdoor-Radeinheiten auf Indoor (Rolle/Trainer)
+  verlegen oder die Routenexposition beachten (Gegenwind raus, Rückenwind heim).
+  Intensität/TSS bleiben gleich — nur die Umsetzung (drinnen/draußen) passt sich an.
+- Kalender ("calendar", Termine/Belegung je Tag): lege Einheiten in die durch den
+  Kalender freie Zeit und plane KEINE Einheit länger als das verfügbare Zeitfenster
+  (volle/ganztägig belegte Tage → kurze Einheit oder Ruhetag, statt zu überfüllen).
+- Fehlt "weather" oder "calendar" im Kontext, ignoriere den jeweiligen Aspekt
+  komplett — erfinde KEIN Wetter und KEINE Termine (Daten-Integrität).
 
 ══════════════════════════════════════════════════════════════════════════════
 DATEN-INTEGRITÄT (KONZEPT §6.3) — STRIKT
@@ -272,7 +290,7 @@ def build_context(db_path: str | Path | None = None) -> dict:
     trend = get_load_series(days=_LOAD_TREND_DAYS, db_path=db_path)
     readiness = readiness_for_date(db_path=db_path)
 
-    return {
+    context = {
         "today": _today_iso(),
         "profile": profile_core,
         "sports": sports,
@@ -285,6 +303,43 @@ def build_context(db_path: str | Path | None = None) -> dict:
         "settings": coach_settings,
         "data_gaps": data_gaps,
     }
+
+    # Externer Kontext (Wetter/Kalender) — robust: Fehler/disabled → Feld fehlt.
+    # Plan-Generierung darf NIE an Wetter/Kalender scheitern (Daten-Integrität).
+    _add_external_context(context)
+
+    return context
+
+
+def _add_external_context(context: dict) -> None:
+    """Ergänzt ``weather`` und ``calendar`` im Kontext, falls die Integrationen liefern.
+
+    Beide Quellen sind streng gekapselt: jede Ausnahme wird geschluckt und das Feld
+    schlicht weggelassen — der Coach plant dann ohne diese Daten. ``calendar`` wird
+    nur gesetzt, wenn tatsächlich Events vorliegen (leerer Kalender = kein Signal).
+    """
+    try:
+        from src.data.sources.weather_open_meteo import forecast_from_settings
+
+        weather = forecast_from_settings(days=_WEATHER_FORECAST_DAYS)
+        if weather:
+            context["weather"] = weather
+    except Exception:  # noqa: BLE001 — Wetter darf den Kontext-Bau nie crashen
+        logger.warning("Wetter-Kontext übersprungen (Fehler).", exc_info=True)
+
+    try:
+        from src.data.sources.calendar_caldav import busy_by_day, events_from_settings
+
+        events = events_from_settings(
+            start_date=context["today"], days=_CALENDAR_WINDOW_DAYS
+        )
+        if events:
+            context["calendar"] = {
+                "events": events,
+                "busy_by_day": busy_by_day(events),
+            }
+    except Exception:  # noqa: BLE001 — Kalender darf den Kontext-Bau nie crashen
+        logger.warning("Kalender-Kontext übersprungen (Fehler).", exc_info=True)
 
 
 def _detect_gaps(sports: dict, goals: list) -> list[str]:

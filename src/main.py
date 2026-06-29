@@ -40,35 +40,91 @@ def run_web(host: str | None = None, port: int | None = None) -> None:
 
 
 def run_collect() -> None:
-    """Datensammlung. Phase 1B: FIT/GPX-Import aus einem optionalen Watch-Verzeichnis.
+    """Datensammlung.
 
-    Ist ``integrations.file_import`` aktiv und ein ``watch_dir`` gesetzt, werden alle
-    .fit/.gpx-Dateien aus diesem Ordner importiert (dedupliziert). Health-Push,
-    Open-Meteo und CalDAV folgen in Phase 2+.
+    Phase 1B: FIT/GPX-Import aus einem optionalen Watch-Verzeichnis (``file_import``).
+    Phase 2A: Wetter-Forecast (Open-Meteo) + Kalender-Events (CalDAV/.ics), wenn die
+    jeweiligen Integrationen aktiv sind. Wetter/Kalender werden — robust, nie
+    crashend — abgerufen und als JSON-Cache unter ``memory/cache/`` abgelegt
+    (Verzeichnis ist git-ignored).
     """
     logger.info("=== SIRDAR COLLECT ===")
     settings = load_settings()
-    fi_cfg = (settings.get("integrations", {}) or {}).get("file_import", {}) or {}
+    integrations = settings.get("integrations", {}) or {}
+    fi_cfg = integrations.get("file_import", {}) or {}
 
+    # — FIT/GPX-Import (Phase 1B) —
     if not fi_cfg.get("enabled"):
-        logger.info("file_import deaktiviert (settings.integrations.file_import.enabled) "
-                    "— nichts zu tun.")
-        return
-
-    watch_dir = fi_cfg.get("watch_dir")
-    if not watch_dir:
+        logger.info("file_import deaktiviert (settings.integrations.file_import.enabled).")
+    elif not fi_cfg.get("watch_dir"):
         logger.info("Kein watch_dir konfiguriert (settings.integrations.file_import.watch_dir) "
                     "— Datei-Import über die Web-Oberfläche (/import) nutzen.")
+    else:
+        from src.data.store import import_dir
+
+        watch_dir = fi_cfg["watch_dir"]
+        logger.info("Importiere FIT/GPX aus %s …", watch_dir)
+        summary = import_dir(watch_dir)
+        logger.info("Import fertig: %d importiert, %d übersprungen, %d Fehler.",
+                    summary["imported"], summary["skipped"], summary["errors"])
+
+    # — Wetter + Kalender (Phase 2A) —
+    _collect_weather(integrations)
+    _collect_calendar(integrations)
+
+    # Health-Push, Garmin, Strava folgen in Phase 2+/3 (KONZEPT §7).
+
+
+# Cache-Verzeichnis für externe Kontextdaten (git-ignored: memory/).
+_CACHE_DIR = "memory/cache"
+
+
+def _write_cache(name: str, data) -> None:
+    """Schreibt ``data`` als JSON nach memory/cache/<name>.json (robust, nie crashend)."""
+    import json
+    from pathlib import Path
+
+    try:
+        cache_dir = Path(_CACHE_DIR)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        path = cache_dir / f"{name}.json"
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str),
+                        encoding="utf-8")
+        logger.info("Cache geschrieben: %s", path)
+    except Exception:  # noqa: BLE001 — Caching ist optional, nie blockierend
+        logger.warning("Konnte %s-Cache nicht schreiben.", name, exc_info=True)
+
+
+def _collect_weather(integrations: dict) -> None:
+    """Ruft den Open-Meteo-Forecast ab (falls aktiv) und cached ihn."""
+    cfg = integrations.get("weather_open_meteo", {}) or {}
+    if not cfg.get("enabled"):
+        logger.info("weather_open_meteo deaktiviert — kein Wetter-Forecast.")
         return
+    from src.data.sources.weather_open_meteo import forecast_from_settings
 
-    from src.data.store import import_dir
+    logger.info("Rufe Open-Meteo-Forecast ab …")
+    forecast = forecast_from_settings(days=14)
+    if not forecast:
+        logger.info("Kein Wetter-Forecast erhalten (keine Koordinaten oder Netzfehler).")
+        return
+    logger.info("Wetter-Forecast erhalten: %d Tage.", len(forecast.get("days", [])))
+    _write_cache("weather", forecast)
 
-    logger.info("Importiere FIT/GPX aus %s …", watch_dir)
-    summary = import_dir(watch_dir)
-    logger.info("Import fertig: %d importiert, %d übersprungen, %d Fehler.",
-                summary["imported"], summary["skipped"], summary["errors"])
 
-    # Health-Push, Open-Meteo, CalDAV folgen in Phase 2+ (KONZEPT §7).
+def _collect_calendar(integrations: dict) -> None:
+    """Ruft Kalender-Events ab (falls aktiv) und cached sie."""
+    cfg = integrations.get("calendar_caldav", {}) or {}
+    if not cfg.get("enabled"):
+        logger.info("calendar_caldav deaktiviert — keine Kalender-Events.")
+        return
+    from src.data.sources.calendar_caldav import events_from_settings
+
+    logger.info("Rufe Kalender-Events ab …")
+    events = events_from_settings(days=28)
+    logger.info("Kalender-Events erhalten: %d.", len(events))
+    if events:
+        _write_cache("calendar", events)
 
 
 def run_plan() -> None:

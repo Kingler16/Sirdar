@@ -163,6 +163,73 @@ def test_build_context_detects_gaps(tmp_path, monkeypatch, tmp_db):
 
 
 # ════════════════════════════════════════════════════════════
+#  build_context — externer Kontext (Wetter & Kalender, Phase 2A)
+# ════════════════════════════════════════════════════════════
+
+def test_build_context_no_external_by_default(seeded_profile, tmp_db):
+    """Ohne aktivierte Integrationen (example-Settings): kein weather/calendar-Feld."""
+    ctx = build_context(db_path=tmp_db)
+    assert "weather" not in ctx
+    assert "calendar" not in ctx  # disabled → Felder fehlen schlicht
+
+
+def test_build_context_includes_weather_and_calendar(seeded_profile, monkeypatch, tmp_db):
+    """Aktivierte (gemockte) Integrationen → weather + calendar landen im Kontext."""
+    fake_weather = {"source": "weather_open_meteo", "days": [{"date": "2026-06-29"}]}
+    fake_events = [
+        {"date": "2026-06-29", "start": "09:00", "end": "10:30",
+         "summary": "Meeting", "all_day": False},
+    ]
+    monkeypatch.setattr(
+        "src.data.sources.weather_open_meteo.forecast_from_settings",
+        lambda *a, **kw: fake_weather,
+    )
+    monkeypatch.setattr(
+        "src.data.sources.calendar_caldav.events_from_settings",
+        lambda *a, **kw: fake_events,
+    )
+
+    ctx = build_context(db_path=tmp_db)
+    assert ctx["weather"] == fake_weather
+    assert ctx["calendar"]["events"] == fake_events
+    assert "2026-06-29" in ctx["calendar"]["busy_by_day"]
+    # Kontext bleibt JSON-serialisierbar.
+    json.dumps(ctx, default=str)
+
+
+def test_build_context_survives_external_errors(seeded_profile, monkeypatch, tmp_db):
+    """Wirft eine Integration, bricht build_context NICHT — Feld fehlt einfach."""
+    def boom(*a, **kw):
+        raise RuntimeError("API down")
+
+    monkeypatch.setattr(
+        "src.data.sources.weather_open_meteo.forecast_from_settings", boom)
+    monkeypatch.setattr(
+        "src.data.sources.calendar_caldav.events_from_settings", boom)
+
+    ctx = build_context(db_path=tmp_db)  # darf NICHT werfen
+    assert "weather" not in ctx
+    assert "calendar" not in ctx
+    # Plan-Generierung funktioniert weiter (Robustheit der Plan-Logik).
+    assert ctx["today"] == date.today().isoformat()
+
+
+def test_build_context_empty_calendar_omitted(seeded_profile, monkeypatch, tmp_db):
+    """Aktiver, aber leerer Kalender → kein calendar-Feld (kein Signal)."""
+    monkeypatch.setattr(
+        "src.data.sources.weather_open_meteo.forecast_from_settings",
+        lambda *a, **kw: None,
+    )
+    monkeypatch.setattr(
+        "src.data.sources.calendar_caldav.events_from_settings",
+        lambda *a, **kw: [],
+    )
+    ctx = build_context(db_path=tmp_db)
+    assert "weather" not in ctx
+    assert "calendar" not in ctx
+
+
+# ════════════════════════════════════════════════════════════
 #  generate_plan
 # ════════════════════════════════════════════════════════════
 
