@@ -1,0 +1,145 @@
+{# ─── Plan-Body (HTMX-swappable) — Coach-Antwort + heutiger Plan + kommende Tage ───
+
+   Wird sowohl von plan.html (Vollseite) als auch von /plan/generate und /plan/chat
+   (HTMX-Swap) gerendert. id="plan-body" ist das hx-target.
+
+   Erwartet im Kontext: today, today_day, upcoming, data_gaps, claude_ok,
+   coach_msg, coach_error, plan_updated, t.
+
+   Makro day_card() rendert eine präskriptive Einheit (Rad: Watt/Zonen/Dauer;
+   Kraft: Übung+Gewicht+Sätze×Wdh.+RIR) + „Warum".
+#}
+
+{% macro sport_label(sport) %}
+  {%- if sport == 'cycling' -%}{{ t.plan.sport_cycling }}
+  {%- elif sport == 'strength' -%}{{ t.plan.sport_strength }}
+  {%- elif sport == 'rest' -%}{{ t.plan.sport_rest }}
+  {%- else -%}{{ t.plan.sport_other }}{%- endif -%}
+{% endmacro %}
+
+{% macro day_card(d, is_today=False) %}
+  {% set w = d.workout %}
+  <article class="plan-day {% if is_today %}is-today{% endif %} sport-{{ (w.sport if w else 'rest') }}">
+    <header class="plan-day-head">
+      <div class="plan-day-when">
+        {% if is_today %}<span class="plan-today-badge">{{ t.plan.today }}</span>{% endif %}
+        <span class="plan-date">{{ d.datum }}</span>
+      </div>
+      <div class="plan-day-tags">
+        {% if w and w.intensity %}
+        <span class="intensity-pill {{ w.intensity }}">{{ t.plan['intensity_' + w.intensity] }}</span>
+        {% endif %}
+        <span class="sport-pill">{{ sport_label(w.sport if w else 'rest') }}</span>
+      </div>
+    </header>
+
+    {% if not w or w.sport == 'rest' %}
+      <p class="plan-day-title">{{ (w.title if w and w.title else t.plan.rest_day) }}</p>
+    {% else %}
+      <p class="plan-day-title">{{ w.title or (w.type or sport_label(w.sport)) }}</p>
+
+      {% if w.sport == 'cycling' and w.cycling %}
+        {% set c = w.cycling %}
+        {% if c.target %}<p class="plan-prescription">{{ c.target }}</p>{% endif %}
+        <ul class="plan-specs">
+          {% if c.duration_min %}<li><span>{{ t.plan.duration }}</span><b>{{ c.duration_min }} min</b></li>{% endif %}
+          {% if c.target_tss %}<li><span>{{ t.plan.target_tss }}</span><b>{{ c.target_tss }}</b></li>{% endif %}
+          {% if c.zones %}<li><span>{{ t.plan.zones }}</span><b>{{ c.zones }}</b></li>{% endif %}
+        </ul>
+      {% elif w.sport == 'strength' and w.strength and w.strength.exercises %}
+        <div class="table-wrap">
+          <table class="data-table plan-strength">
+            <thead>
+              <tr>
+                <th>{{ t.plan.exercise }}</th>
+                <th>{{ t.plan.sets }}×{{ t.plan.reps }}</th>
+                <th>{{ t.plan.weight }}</th>
+                <th>{{ t.plan.rir }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ex in w.strength.exercises %}
+              <tr>
+                <td>{{ ex.exercise or '—' }}</td>
+                <td>{% if ex.sets is not none and ex.reps is not none %}{{ ex.sets }}×{{ ex.reps }}{% else %}—{% endif %}</td>
+                <td>{% if ex.weight_kg is not none %}{{ ex.weight_kg }}{% else %}—{% endif %}</td>
+                <td>{% if ex.rir is not none %}{{ ex.rir }}{% else %}—{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    {% if w and w.rationale %}
+    <p class="plan-why"><span class="plan-why-label">{{ t.plan.why }}:</span> {{ w.rationale }}</p>
+    {% endif %}
+  </article>
+{% endmacro %}
+
+<div id="plan-body">
+
+  {# ── Coach-Status-Banner (Antwort / Fehler / Plan aktualisiert) ───────── #}
+  {% if plan_updated %}
+  <div class="flash ok">{{ t.plan.plan_updated }}</div>
+  {% endif %}
+  {% if coach_error %}
+  <div class="flash warn"><strong>{{ t.plan.error }}</strong><br>{{ coach_error }}</div>
+  {% endif %}
+  {% if coach_msg %}
+  <section class="card coach-reply-card">
+    <h2 class="card-title">{{ t.plan.coach_reply }}</h2>
+    <p class="coach-reply-text">{{ coach_msg }}</p>
+  </section>
+  {% endif %}
+
+  {# ── Setup-Hinweise (Daten-Integrität: nichts erfinden) ───────────────── #}
+  {% if 'no_goals' in data_gaps or 'cycling_no_ftp' in data_gaps or 'strength_no_current_exercises' in data_gaps or 'no_sports_enabled' in data_gaps %}
+  <section class="card setup-hint-card">
+    <h2 class="card-title">{{ t.plan.needs_setup }}</h2>
+    <p class="card-body">{{ t.plan.needs_setup_body }}</p>
+    <ul class="setup-gaps">
+      {% if 'cycling_no_ftp' in data_gaps %}<li>FTP ({{ t.plan.sport_cycling }})</li>{% endif %}
+      {% if 'strength_no_current_exercises' in data_gaps %}<li>{{ t.plan.exercise }} ({{ t.plan.sport_strength }})</li>{% endif %}
+      {% if 'no_goals' in data_gaps %}<li>{{ t.nav.goals }}</li>{% endif %}
+    </ul>
+    <div class="form-actions">
+      {% if 'no_goals' in data_gaps %}<a href="/goals" class="btn-secondary btn-sm">{{ t.plan.to_goals }}</a>{% endif %}
+      <a href="/profile" class="btn-primary btn-sm">{{ t.plan.to_profile }}</a>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ── Heute ────────────────────────────────────────────────────────────── #}
+  {% if today_day %}
+  <section class="plan-section">
+    {% if today_day.phase or today_day.woche_typ %}
+    <div class="plan-phase-bar">
+      {% if today_day.phase %}<span class="phase-pill">{{ t.plan.block_phase }}: {{ today_day.phase | capitalize }}</span>{% endif %}
+      {% if today_day.woche_typ %}<span class="phase-pill muted">{{ t.plan.week_type }}: {{ t.plan['week_' + today_day.woche_typ] if ('week_' + today_day.woche_typ) in t.plan else today_day.woche_typ }}</span>{% endif %}
+    </div>
+    {% endif %}
+    {{ day_card(today_day, is_today=True) }}
+  </section>
+  {% endif %}
+
+  {# ── Kommende Tage ────────────────────────────────────────────────────── #}
+  {% if upcoming %}
+  <section class="plan-section">
+    <h2 class="plan-section-title">{{ t.plan.upcoming }}</h2>
+    <div class="plan-grid">
+      {% for d in upcoming %}{{ day_card(d) }}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ── Leerer Plan ──────────────────────────────────────────────────────── #}
+  {% if not today_day and not upcoming %}
+  <section class="card placeholder-card">
+    <div class="placeholder-icon">▤</div>
+    <p class="card-lead">{{ t.plan.no_plan }}</p>
+    <p class="card-body">{{ t.plan.no_plan_body }}</p>
+  </section>
+  {% endif %}
+</div>

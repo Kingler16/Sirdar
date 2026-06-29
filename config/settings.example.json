@@ -13,7 +13,11 @@
   },
   "ai": {
     "autonomy": "suggest",
-    "_autonomy_options": ["auto", "suggest"]
+    "_autonomy_options": ["auto", "suggest"],
+    "planning_horizon": "week",
+    "_planning_horizon_options": ["block", "week", "day"],
+    "coach_tone": "balanced",
+    "_coach_tone_options": ["balanced"]
   },
   "schedule": {
     "daily_collect_hour": 5,

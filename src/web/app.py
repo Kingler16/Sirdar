@@ -25,7 +25,7 @@ from src.core.readiness import readiness_for_date
 from src.data.store import health_series, recent_workouts
 from src.web.deps import STATIC_DIR, ctx, resolve_lang, templates
 from src.web.i18n import SUPPORTED_LANGS
-from src.web.routes import health_router, imports_router, onboarding_router
+from src.web.routes import coach_router, health_router, imports_router, onboarding_router
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(onboarding_router)
 app.include_router(imports_router)
 app.include_router(health_router)
+app.include_router(coach_router)
 
 # Anzahl Tage für Fitness/Form- und Trend-Charts.
 _CHART_DAYS = 90

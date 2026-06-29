@@ -71,12 +71,7 @@ def _checkbox(value: str | None) -> bool:
     return value is not None and value != ""
 
 
-# ─── /plan — Platzhalter ─────────────────────────────────────────────────
-
-@router.get("/plan", response_class=HTMLResponse)
-async def plan(request: Request):
-    """Trainingsplan-Platzhalter — die echte Plan-Ansicht folgt in Phase 1."""
-    return templates.TemplateResponse(request, "plan.html", ctx(request, "plan"))
+# ─── /plan liegt in src/web/routes/coach.py (Phase 1D) ───────────────────
 
 
 # ─── /profile — Profil & Ist-Zustand ─────────────────────────────────────
@@ -257,9 +252,12 @@ async def settings_save(request: Request):
     web["host"] = _to_str(form.get("web_host")) or web.get("host", "0.0.0.0")
     web["port"] = _to_int(form.get("web_port")) or web.get("port", 8000)
 
-    # — KI-Autonomie —
+    # — KI-Autonomie / Coach —
     ai = settings.setdefault("ai", {})
     ai["autonomy"] = _to_str(form.get("autonomy")) or ai.get("autonomy", "suggest")
+    horizon = _to_str(form.get("planning_horizon"))
+    ai["planning_horizon"] = horizon if horizon in ("block", "week", "day") else ai.get("planning_horizon", "week")
+    ai["coach_tone"] = _to_str(form.get("coach_tone")) or ai.get("coach_tone", "balanced")
 
     # — Integrationen —
     integ = settings.setdefault("integrations", {})

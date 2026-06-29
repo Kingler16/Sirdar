@@ -58,15 +58,35 @@
         </div>
     </section>
 
-    <!-- ── KI-Autonomie ─────────────────────────────────────── -->
+    <!-- ── KI-Autonomie / Coach ─────────────────────────────── -->
+    {% set ai = settings.get('ai', {}) %}
     <section class="card">
         <h2 class="card-title">{{ t.settings.ai }}</h2>
+        <div class="grid-2">
+            <div class="field">
+                <label for="autonomy">{{ t.settings.autonomy }}</label>
+                <select id="autonomy" name="autonomy" class="input">
+                    <option value="auto" {% if ai.get('autonomy') == 'auto' %}selected{% endif %}>{{ t.settings.autonomy_auto }}</option>
+                    <option value="suggest" {% if ai.get('autonomy', 'suggest') == 'suggest' %}selected{% endif %}>{{ t.settings.autonomy_suggest }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="planning_horizon">{{ t.settings.planning_horizon }}</label>
+                <select id="planning_horizon" name="planning_horizon" class="input">
+                    {% set ph = ai.get('planning_horizon', 'week') %}
+                    <option value="block" {% if ph == 'block' %}selected{% endif %}>{{ t.settings.horizon_block }}</option>
+                    <option value="week" {% if ph == 'week' %}selected{% endif %}>{{ t.settings.horizon_week }}</option>
+                    <option value="day" {% if ph == 'day' %}selected{% endif %}>{{ t.settings.horizon_day }}</option>
+                </select>
+                <p class="field-hint">{{ t.settings.planning_horizon_hint }}</p>
+            </div>
+        </div>
         <div class="field">
-            <label for="autonomy">{{ t.settings.autonomy }}</label>
-            <select id="autonomy" name="autonomy" class="input">
-                <option value="auto" {% if settings.get('ai', {}).get('autonomy') == 'auto' %}selected{% endif %}>{{ t.settings.autonomy_auto }}</option>
-                <option value="suggest" {% if settings.get('ai', {}).get('autonomy') == 'suggest' %}selected{% endif %}>{{ t.settings.autonomy_suggest }}</option>
+            <label for="coach_tone">{{ t.settings.coach_tone }}</label>
+            <select id="coach_tone" name="coach_tone" class="input">
+                <option value="balanced" {% if ai.get('coach_tone', 'balanced') == 'balanced' %}selected{% endif %}>{{ t.settings.coach_tone_balanced }}</option>
             </select>
+            <p class="field-hint">{{ t.settings.coach_tone_hint }}</p>
         </div>
     </section>
 

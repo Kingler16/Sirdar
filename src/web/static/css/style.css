@@ -316,6 +316,63 @@ select.input {
 @media (min-width: 560px) { .trend-grid { grid-template-columns: 1fr 1fr; } }
 .trend-block .card-sub { margin-top: 0; }
 
+/* ── Plan / Coach (Phase 1D) ──────────────────────────────── */
+.coach-controls .horizon-form { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.horizon-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+.horizon-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.horizon-pill { position: relative; }
+.horizon-pill input { position: absolute; opacity: 0; pointer-events: none; }
+.horizon-pill span {
+    display: inline-block; padding: 7px 14px; border-radius: 999px;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.horizon-pill input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.coach-input { resize: vertical; min-height: 48px; font-family: inherit; }
+.coach-spin { color: var(--accent); font-size: 13px; align-self: center; }
+/* HTMX-Indikator: nur während eines Requests sichtbar. */
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
+
+.coach-reply-card { border-color: rgba(79, 157, 255, 0.35); }
+.coach-reply-text { font-size: 14px; line-height: 1.6; color: var(--text); margin: 0; white-space: pre-wrap; }
+
+.setup-hint-card { border-color: rgba(245, 158, 11, 0.35); }
+.setup-gaps { margin: 10px 0 4px; padding-left: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+.plan-section { margin-bottom: 18px; }
+.plan-section-title { font-size: 14px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 10px 4px; }
+.plan-phase-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.phase-pill { font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.phase-pill.muted { background: var(--bg-elev-2); color: var(--text-muted); }
+
+.plan-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 560px) { .plan-grid { grid-template-columns: 1fr 1fr; } }
+
+.plan-day {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+}
+.plan-day.is-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft); }
+.plan-day.sport-rest { opacity: 0.85; }
+.plan-day-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.plan-day-when { display: flex; align-items: center; gap: 8px; }
+.plan-today-badge { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); padding: 3px 9px; border-radius: 999px; }
+.plan-date { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.plan-day-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.sport-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--bg-elev-2); color: var(--text-muted); }
+.intensity-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.02em; }
+.intensity-pill.easy { background: rgba(52, 211, 153, 0.14); color: var(--ok); }
+.intensity-pill.moderate { background: rgba(245, 158, 11, 0.14); color: #fbbf24; }
+.intensity-pill.hard { background: rgba(248, 113, 113, 0.14); color: var(--bad); }
+.plan-day-title { font-size: 16px; font-weight: 700; margin: 0 0 8px; }
+.plan-prescription { font-size: 14px; font-weight: 600; color: var(--accent); margin: 0 0 8px; }
+.plan-specs { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 8px; padding: 0; font-size: 13px; color: var(--text-muted); }
+.plan-specs b { color: var(--text); font-weight: 600; }
+.plan-strength { font-size: 13px; }
+.plan-why { font-size: 13px; line-height: 1.5; color: var(--text-muted); margin: 10px 0 0; }
+.plan-why-label { font-weight: 700; color: var(--text); }
+
 /* ── Responsive ───────────────────────────────────────────── */
 @media (min-width: 760px) {
     .bottom-nav { max-width: var(--maxw); margin: 0 auto; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid var(--border); }

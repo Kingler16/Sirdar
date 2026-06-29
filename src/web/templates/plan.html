@@ -7,10 +7,57 @@
     <p class="page-subtitle">{{ t.plan.subtitle }}</p>
 </section>
 
-<!-- Platzhalter — die präskriptive Plan-Ansicht (Rad-Intervalle / Kraft-Übungen) folgt in Phase 1 -->
-<section class="card placeholder-card">
-    <div class="placeholder-icon">▤</div>
-    <p class="card-lead">{{ t.plan.soon }}</p>
-    <p class="card-body">{{ t.plan.body }}</p>
+{# ── Claude-CLI fehlt → klare Meldung, keine Coach-Aktionen ─────────────── #}
+{% if not claude_ok %}
+<section class="card status-card">
+    <h2 class="card-title">{{ t.plan.claude_missing }}</h2>
+    <p class="status-hint">{{ t.plan.claude_missing_body }}</p>
 </section>
+{% endif %}
+
+{# ── Coach-Steuerung: Horizont-Buttons (Plan erstellen) ────────────────── #}
+{% if claude_ok %}
+<section class="card coach-controls">
+    <h2 class="card-title">{{ t.plan.coach }}</h2>
+
+    {# Horizont-Auswahl + „Plan erstellen". Sendet horizon, swappt #plan-body. #}
+    <form class="horizon-form"
+          hx-post="/plan/generate" hx-target="#plan-body" hx-swap="outerHTML"
+          hx-indicator="#coach-spin" hx-disabled-elt="this">
+        <label class="horizon-label">{{ t.plan.horizon }}</label>
+        <div class="horizon-pills">
+            {% set labels = {'block': t.plan.horizon_block, 'week': t.plan.horizon_week, 'day': t.plan.horizon_day} %}
+            {% for h in horizons %}
+            <label class="horizon-pill">
+                <input type="radio" name="horizon" value="{{ h }}"
+                       {% if h == default_horizon %}checked{% endif %}>
+                <span>{{ labels[h] }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">{{ t.plan.generate }}</button>
+        </div>
+    </form>
+
+    {# Freitext-Chat an den Coach (kann Plan ad hoc anpassen + Horizont überschreiben). #}
+    <form class="coach-chat-form"
+          hx-post="/plan/chat" hx-target="#plan-body" hx-swap="outerHTML"
+          hx-indicator="#coach-spin" hx-disabled-elt="this"
+          hx-on::after-request="this.reset()">
+        <div class="field">
+            <label for="coach-message">{{ t.plan.coach_prompt_label }}</label>
+            <textarea id="coach-message" name="message" class="input coach-input" rows="2"
+                      placeholder="{{ t.plan.coach_placeholder }}" required></textarea>
+        </div>
+        <div class="form-actions">
+            <span id="coach-spin" class="coach-spin htmx-indicator">{{ t.plan.thinking }}</span>
+            <button type="submit" class="btn-primary">{{ t.plan.send }}</button>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+{# ── Plan-Body (HTMX-Target; wird bei generate/chat ersetzt) ───────────── #}
+{% include "partials/plan_body.html" %}
 {% endblock %}
