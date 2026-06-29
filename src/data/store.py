@@ -161,3 +161,91 @@ def recent_workouts(limit: int = 10, db_path: str | Path | None = None) -> list[
         return [dict(r) for r in rows]
     finally:
         conn.close()
+
+
+# ─── Health-Metriken (manueller Morgen-Check, Phase 1C) ──────────────────────
+
+# Bewertbare Health-Spalten (ohne Primary Key 'datum' und 'quelle').
+_HEALTH_FIELDS = (
+    "hrv", "rhr", "schlaf_h", "schlaf_qualitaet",
+    "gewicht", "vo2max", "soreness", "stimmung", "readiness_score",
+)
+
+
+def upsert_health_metrics(
+    datum: str,
+    values: dict,
+    quelle: str = "manual",
+    db_path: str | Path | None = None,
+) -> None:
+    """Schreibt/aktualisiert genau eine ``health_metrics``-Zeile pro Datum (UPSERT).
+
+    Nur in ``values`` enthaltene, nicht-``None`` Felder werden gesetzt; bestehende
+    Werte anderer Felder bleiben bei einem Update erhalten (kein Überschreiben mit
+    None). ``datum`` ist Primary Key → ein Eintrag pro Kalendertag.
+
+    Args:
+        datum: ISO-Datum (YYYY-MM-DD).
+        values: Dict mit Teilmenge von ``_HEALTH_FIELDS``.
+        quelle: Datenquelle ('manual' für den Morgen-Check).
+        db_path: optionaler DB-Pfad (Tests).
+    """
+    init_db(db_path)
+    # Nur gesetzte (nicht-None) Felder berücksichtigen.
+    present = {k: values[k] for k in _HEALTH_FIELDS if values.get(k) is not None}
+
+    cols = ["datum", *present.keys(), "quelle"]
+    params = {"datum": datum, "quelle": quelle, **present}
+    placeholders = ", ".join(f":{c}" for c in cols)
+    # Bei Konflikt nur die übergebenen Felder + quelle aktualisieren.
+    updates = ", ".join(f"{c} = excluded.{c}" for c in [*present.keys(), "quelle"])
+    set_clause = f"DO UPDATE SET {updates}" if present else "DO NOTHING"
+
+    conn = get_connection(db_path)
+    try:
+        conn.execute(
+            f"""
+            INSERT INTO health_metrics ({", ".join(cols)})
+            VALUES ({placeholders})
+            ON CONFLICT(datum) {set_clause}
+            """,
+            params,
+        )
+        conn.commit()
+        logger.info("health_metrics upsert: %s (quelle=%s, felder=%s)",
+                    datum, quelle, ", ".join(present) or "—")
+    finally:
+        conn.close()
+
+
+def get_health_metrics(datum: str, db_path: str | Path | None = None) -> dict | None:
+    """Gibt die ``health_metrics``-Zeile für ``datum`` zurück (oder None)."""
+    init_db(db_path)
+    conn = get_connection(db_path)
+    try:
+        row = conn.execute(
+            "SELECT * FROM health_metrics WHERE datum = ?", (datum,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def health_series(
+    days: int = 90,
+    db_path: str | Path | None = None,
+) -> list[dict]:
+    """Liefert die jüngsten ``days`` Health-Tage (chronologisch aufsteigend).
+
+    Für HRV/RHR/Schlaf-Trend-Charts. Leere Liste, wenn keine Daten vorhanden.
+    """
+    init_db(db_path)
+    conn = get_connection(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT * FROM health_metrics ORDER BY datum DESC LIMIT ?",
+            (max(0, days),),
+        ).fetchall()
+        return [dict(r) for r in reversed(rows)]
+    finally:
+        conn.close()

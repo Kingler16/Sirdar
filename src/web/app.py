@@ -20,9 +20,12 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 
 from src.core.claude import claude_available
+from src.core.load import compute_load, get_load_series, latest_load, weekly_tss
+from src.core.readiness import readiness_for_date
+from src.data.store import health_series, recent_workouts
 from src.web.deps import STATIC_DIR, ctx, resolve_lang, templates
 from src.web.i18n import SUPPORTED_LANGS
-from src.web.routes import imports_router, onboarding_router
+from src.web.routes import health_router, imports_router, onboarding_router
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +33,46 @@ app = FastAPI(title="Sirdar")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(onboarding_router)
 app.include_router(imports_router)
+app.include_router(health_router)
+
+# Anzahl Tage für Fitness/Form- und Trend-Charts.
+_CHART_DAYS = 90
+# Anzahl Workouts in der Dashboard-Tabelle.
+_RECENT_WORKOUTS = 5
 
 
 # ─── HTML Pages ──────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    """Dashboard mit Health-Overview-Platzhalter + Claude-CLI-Status."""
+    """Health-Overview-Dashboard: Readiness, Fitness/Form, Wochen-Load, Trends.
+
+    ``compute_load()`` wird beim Laden aufgerufen, damit die ``load``-Tabelle
+    stets den aktuellen Workout-Stand widerspiegelt (idempotent, billig).
+    """
+    compute_load()  # load-Tabelle aktualisieren (idempotent).
+
+    load_series = get_load_series(days=_CHART_DAYS)
+    trend_series = health_series(days=_CHART_DAYS)
+    readiness = readiness_for_date()
+    has_trends = any(
+        r.get("hrv") is not None or r.get("rhr") is not None or r.get("schlaf_h") is not None
+        for r in trend_series
+    )
+
     return templates.TemplateResponse(
         request, "dashboard.html",
-        ctx(request, "dashboard", claude_ok=claude_available()),
+        ctx(
+            request, "dashboard",
+            claude_ok=claude_available(),
+            readiness=readiness,
+            load_series=load_series,
+            latest=latest_load(),
+            week_load=weekly_tss(days=7),
+            trend_series=trend_series,
+            has_trends=has_trends,
+            workouts=recent_workouts(limit=_RECENT_WORKOUTS),
+        ),
     )
 
 

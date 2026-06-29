@@ -8,7 +8,7 @@
  * Push handlers follow in Phase 2/3.
  */
 
-const VERSION = 'sirdar-0.2.0';
+const VERSION = 'sirdar-0.3.0';
 const STATIC_CACHE = `sirdar-static-${VERSION}`;
 const RUNTIME_CACHE = `sirdar-runtime-${VERSION}`;
 
@@ -16,6 +16,7 @@ const PRECACHE = [
   '/',
   '/static/css/style.css',
   '/static/js/htmx.min.js',
+  '/static/js/chart.umd.min.js',
   '/static/icon.svg',
   '/manifest.webmanifest',
 ];

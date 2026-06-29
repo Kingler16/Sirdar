@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.health.title }}{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.health.title }}</h1>
+    <p class="page-subtitle">{{ t.health.subtitle }}</p>
+</section>
+
+{% if saved %}
+<div class="flash ok">{{ t.health.saved }}</div>
+{% endif %}
+
+<section class="card">
+    <p class="card-body" style="margin-bottom:18px;">{{ t.health.intro }}</p>
+    <form method="post" action="/health/log" class="stack">
+        <div class="field">
+            <label for="datum">{{ t.health.date }}</label>
+            <input type="date" id="datum" name="datum" class="input" value="{{ day }}">
+        </div>
+
+        <div class="grid-2">
+            <div class="field">
+                <label for="hrv">{{ t.health.hrv }}</label>
+                <input type="number" step="0.1" id="hrv" name="hrv" class="input"
+                       value="{{ existing.hrv if existing.hrv is not none else '' }}">
+                <p class="field-hint">{{ t.health.hrv_hint }}</p>
+            </div>
+            <div class="field">
+                <label for="rhr">{{ t.health.rhr }}</label>
+                <input type="number" step="1" id="rhr" name="rhr" class="input"
+                       value="{{ existing.rhr if existing.rhr is not none else '' }}">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="field">
+                <label for="schlaf_h">{{ t.health.sleep_h }}</label>
+                <input type="number" step="0.1" id="schlaf_h" name="schlaf_h" class="input"
+                       value="{{ existing.schlaf_h if existing.schlaf_h is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="schlaf_qualitaet">{{ t.health.sleep_quality }}</label>
+                <input type="number" step="1" min="1" max="5" id="schlaf_qualitaet" name="schlaf_qualitaet" class="input"
+                       value="{{ existing.schlaf_qualitaet if existing.schlaf_qualitaet is not none else '' }}">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="field">
+                <label for="soreness">{{ t.health.soreness }}</label>
+                <input type="number" step="1" min="1" max="5" id="soreness" name="soreness" class="input"
+                       value="{{ existing.soreness if existing.soreness is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="stimmung">{{ t.health.mood }}</label>
+                <input type="number" step="1" min="1" max="5" id="stimmung" name="stimmung" class="input"
+                       value="{{ existing.stimmung if existing.stimmung is not none else '' }}">
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="gewicht">{{ t.health.weight }}</label>
+            <input type="number" step="0.1" id="gewicht" name="gewicht" class="input"
+                   value="{{ existing.gewicht if existing.gewicht is not none else '' }}">
+        </div>
+
+        <div class="form-actions">
+            <a href="/" class="btn-secondary">{{ t.health.back_to_dashboard }}</a>
+            <button type="submit" class="btn-primary">{{ t.health.save }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

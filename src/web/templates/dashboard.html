@@ -7,24 +7,158 @@
     <p class="page-subtitle">{{ t.dashboard.subtitle }}</p>
 </section>
 
-<!-- Health-Overview-Platzhalter (Phase 1: Readiness-Ampel, HRV/RHR/Schlaf, CTL/ATL/TSB) -->
-<section class="card placeholder-card">
-    <div class="placeholder-icon">♡</div>
-    <h2 class="card-title">{{ t.dashboard.health_overview }}</h2>
-    <p class="card-lead">{{ t.dashboard.health_overview_soon }}</p>
-    <p class="card-body">{{ t.dashboard.health_overview_body }}</p>
+{# ── Readiness-Ampel heute ────────────────────────────────────────────── #}
+<section class="card readiness-card">
+    <h2 class="card-title">{{ t.dashboard.readiness }}</h2>
+    {% set level = readiness.level %}
+    {% if level == 'unknown' and not readiness.metrics %}
+        {# Gar keine Health-Daten erfasst #}
+        <div class="readiness-head">
+            <div class="readiness-light unknown">❔</div>
+            <div class="readiness-text">
+                <span class="readiness-level unknown">{{ t.dashboard.readiness_no_data }}</span>
+                <span class="card-body">{{ t.dashboard.readiness_unknown_hint }}</span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a href="/health/log" class="btn-primary">{{ t.dashboard.log_health_cta }}</a>
+        </div>
+    {% else %}
+        {% set icons = {'green': '🟢', 'yellow': '🟡', 'red': '🔴', 'unknown': '❔'} %}
+        {% set labels = {'green': t.dashboard.readiness_green, 'yellow': t.dashboard.readiness_yellow,
+                         'red': t.dashboard.readiness_red, 'unknown': t.dashboard.readiness_unknown} %}
+        <div class="readiness-head">
+            <div class="readiness-light {{ level }}">{{ icons[level] }}</div>
+            <div class="readiness-text">
+                <span class="readiness-level {{ level }}">{{ labels[level] }}</span>
+                {% if level == 'unknown' %}
+                <span class="card-body">{{ t.dashboard.readiness_unknown_hint }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if readiness.flags %}
+        <div class="readiness-flags">
+            {% for f in readiness.flags %}
+            <span class="flag-pill">{{ t.dashboard['flag_' + f] }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if readiness.metrics %}
+        {% set m = readiness.metrics %}
+        <div class="readiness-metrics">
+            {% if m.hrv is not none %}<span>HRV <b>{{ m.hrv }} ms</b></span>{% endif %}
+            {% if m.rhr is not none %}<span>{{ t.health.rhr.split(' (')[0] }} <b>{{ m.rhr }} bpm</b></span>{% endif %}
+            {% if m.schlaf_h is not none %}<span>{{ t.dashboard.trend_sleep }} <b>{{ m.schlaf_h }}</b></span>{% endif %}
+            {% if m.soreness is not none %}<span>{{ t.health.soreness.split(' (')[0] }} <b>{{ m.soreness }}</b></span>{% endif %}
+            {% if m.stimmung is not none %}<span>{{ t.health.mood.split(' (')[0] }} <b>{{ m.stimmung }}</b></span>{% endif %}
+        </div>
+        {% endif %}
+        <div class="form-actions">
+            <a href="/health/log" class="btn-secondary btn-sm">{{ t.dashboard.log_health_cta }}</a>
+        </div>
+    {% endif %}
 </section>
 
-<!-- Trainingsdaten-Import (FIT/GPX) -->
+{# ── Wochen-Load + aktuelle CTL/ATL/TSB-Kennzahlen ────────────────────── #}
 <section class="card">
-    <h2 class="card-title">{{ t.imports.title }}</h2>
-    <p class="card-body">{{ t.imports.subtitle }}</p>
-    <div class="form-actions">
-        <a href="/import" class="btn-primary">{{ t.imports.dashboard_cta }}</a>
+    <h2 class="card-title">{{ t.dashboard.week_load }}</h2>
+    <p class="card-body">{{ t.dashboard.week_load_sub }}</p>
+    <div class="metric-grid" style="margin-top:14px;">
+        <div class="metric-box">
+            <div class="metric-value">{{ week_load | round(0) | int }}</div>
+            <div class="metric-label">TSS / 7d</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-value">{{ (latest.ctl | round(0) | int) if latest else '—' }}</div>
+            <div class="metric-label">{{ t.dashboard.ctl }}</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-value">{{ (latest.atl | round(0) | int) if latest else '—' }}</div>
+            <div class="metric-label">{{ t.dashboard.atl }}</div>
+        </div>
+        <div class="metric-box">
+            {% if latest %}
+            <div class="metric-value {{ 'pos' if latest.tsb >= 0 else 'neg' }}">{{ latest.tsb | round(0) | int }}</div>
+            {% else %}
+            <div class="metric-value">—</div>
+            {% endif %}
+            <div class="metric-label">{{ t.dashboard.tsb }}</div>
+        </div>
     </div>
 </section>
 
-<!-- System-Status: ist die Claude-CLI erreichbar? -->
+{# ── Fitness/Form-Chart (CTL/ATL/TSB) ─────────────────────────────────── #}
+<section class="card">
+    <h2 class="card-title">{{ t.dashboard.fitness_form }}</h2>
+    <p class="card-body">{{ t.dashboard.fitness_form_sub }}</p>
+    {% if load_series %}
+    <div class="chart-wrap"><canvas id="loadChart"></canvas></div>
+    {% else %}
+    <p class="card-body" style="margin-top:14px;">{{ t.dashboard.no_load_data }}</p>
+    {% endif %}
+</section>
+
+{# ── HRV/RHR/Schlaf-Trends ────────────────────────────────────────────── #}
+{% if has_trends %}
+<section class="card">
+    <h2 class="card-title">{{ t.dashboard.trends }}</h2>
+    <div class="trend-grid">
+        <div class="trend-block">
+            <div class="card-sub">{{ t.dashboard.trend_hrv }}</div>
+            <div class="chart-wrap small"><canvas id="hrvChart"></canvas></div>
+        </div>
+        <div class="trend-block">
+            <div class="card-sub">{{ t.dashboard.trend_rhr }}</div>
+            <div class="chart-wrap small"><canvas id="rhrChart"></canvas></div>
+        </div>
+        <div class="trend-block">
+            <div class="card-sub">{{ t.dashboard.trend_sleep }}</div>
+            <div class="chart-wrap small"><canvas id="sleepChart"></canvas></div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# ── Letzte Workouts ──────────────────────────────────────────────────── #}
+<section class="card">
+    <h2 class="card-title">{{ t.dashboard.recent_workouts }}</h2>
+    {% if workouts %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{{ t.imports.col_date }}</th>
+                    <th>{{ t.imports.col_sport }}</th>
+                    <th>{{ t.imports.col_duration }}</th>
+                    <th>{{ t.imports.col_distance }}</th>
+                    <th>TSS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in workouts %}
+                <tr>
+                    <td>{{ w.datum or '—' }}</td>
+                    <td>{{ w.sportart or '—' }}</td>
+                    <td>{% if w.dauer is not none %}{{ w.dauer }} min{% else %}—{% endif %}</td>
+                    <td>{% if w.distanz is not none %}{{ w.distanz }} km{% else %}—{% endif %}</td>
+                    <td>{{ w.tss if w.tss is not none else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="form-actions">
+        <a href="/import" class="btn-secondary btn-sm">{{ t.imports.dashboard_cta }}</a>
+    </div>
+    {% else %}
+    <p class="card-body">{{ t.imports.no_workouts }}</p>
+    <div class="form-actions">
+        <a href="/import" class="btn-primary">{{ t.imports.dashboard_cta }}</a>
+    </div>
+    {% endif %}
+</section>
+
+{# ── System-Status: ist die Claude-CLI erreichbar? ────────────────────── #}
 <section class="card status-card">
     <h2 class="card-title">{{ t.dashboard.system_status }}</h2>
     <div class="status-row">
@@ -39,4 +173,94 @@
     <p class="status-hint">{{ t.dashboard.claude_hint }}</p>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+{# Chart.js lokal gevendort (kein CDN zur Laufzeit, funktioniert offline/PWA) #}
+<script src="/static/js/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (typeof Chart === 'undefined') return;
+
+  // Theme-Farben aus den CSS-Variablen.
+  const css = getComputedStyle(document.documentElement);
+  const COL = {
+    ctl:  '#4f9dff',
+    atl:  '#fbbf24',
+    tsb:  '#34d399',
+    rhr:  '#f87171',
+    hrv:  '#4f9dff',
+    sleep:'#a78bfa',
+    grid: 'rgba(255,255,255,0.06)',
+    text: '#8b929c',
+  };
+
+  // Daten aus dem Server-Kontext (JSON, sicher per |tojson serialisiert).
+  const loadSeries  = {{ load_series | tojson }};
+  const trendSeries = {{ trend_series | tojson }};
+
+  Chart.defaults.color = COL.text;
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.size = 11;
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: { grid: { color: COL.grid }, ticks: { maxTicksLimit: 6 } },
+      y: { grid: { color: COL.grid } },
+    },
+  };
+
+  // ── Fitness/Form-Chart (CTL/ATL/TSB) ──────────────────────────────
+  const loadEl = document.getElementById('loadChart');
+  if (loadEl && loadSeries.length) {
+    const labels = loadSeries.map(d => d.datum);
+    new Chart(loadEl, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: {{ t.dashboard.ctl | tojson }}, data: loadSeries.map(d => d.ctl),
+            borderColor: COL.ctl, backgroundColor: COL.ctl, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+          { label: {{ t.dashboard.atl | tojson }}, data: loadSeries.map(d => d.atl),
+            borderColor: COL.atl, backgroundColor: COL.atl, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+          { label: {{ t.dashboard.tsb | tojson }}, data: loadSeries.map(d => d.tsb),
+            borderColor: COL.tsb, backgroundColor: COL.tsb, tension: 0.3, pointRadius: 0, borderWidth: 2, borderDash: [4, 3] },
+        ],
+      },
+      options: Object.assign({}, baseOpts, {
+        plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, padding: 12 } } },
+      }),
+    });
+  }
+
+  // ── Kleine Trend-Charts ───────────────────────────────────────────
+  function miniChart(id, key, color, unit) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pts = trendSeries.filter(d => d[key] !== null && d[key] !== undefined);
+    if (!pts.length) return;
+    new Chart(el, {
+      type: 'line',
+      data: {
+        labels: pts.map(d => d.datum),
+        datasets: [{ data: pts.map(d => d[key]), borderColor: color, backgroundColor: color,
+                     tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false }],
+      },
+      options: Object.assign({}, baseOpts, {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: COL.grid }, ticks: { maxTicksLimit: 4 } },
+          y: { grid: { color: COL.grid }, ticks: { maxTicksLimit: 4 } },
+        },
+      }),
+    });
+  }
+  miniChart('hrvChart',   'hrv',      COL.hrv);
+  miniChart('rhrChart',   'rhr',      COL.rhr);
+  miniChart('sleepChart', 'schlaf_h', COL.sleep);
+})();
+</script>
 {% endblock %}
