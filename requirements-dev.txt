@@ -1,2 +1,3 @@
 -r requirements.txt
 pytest>=8.0
+pillow>=10.0   # only to (re)generate the app icons in src/web/static/

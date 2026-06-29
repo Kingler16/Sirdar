@@ -182,17 +182,16 @@
 (function () {
   if (typeof Chart === 'undefined') return;
 
-  // Theme-Farben aus den CSS-Variablen.
-  const css = getComputedStyle(document.documentElement);
+  // Sirdar-Markenpalette (warm/erdig) — lesbar auf Charcoal.
   const COL = {
-    ctl:  '#4f9dff',
-    atl:  '#fbbf24',
-    tsb:  '#34d399',
-    rhr:  '#f87171',
-    hrv:  '#4f9dff',
-    sleep:'#a78bfa',
-    grid: 'rgba(255,255,255,0.06)',
-    text: '#8b929c',
+    ctl:  '#CC6A4E',   // Fitness/CTL — Clay (Marke)
+    atl:  '#3E9E89',   // Fatigue/ATL — Teal (Sekundär)
+    tsb:  '#E0A33E',   // Form/TSB — Amber
+    rhr:  '#D85240',   // RHR — Red
+    hrv:  '#3E9E89',   // HRV — Teal
+    sleep:'#E59072',   // Schlaf — helles Clay
+    grid: 'rgba(166,153,138,0.16)',  // Taupe, low-alpha
+    text: '#A6998A',                 // Taupe — Achsenbeschriftung
   };
 
   // Daten aus dem Server-Kontext (JSON, sicher per |tojson serialisiert).
@@ -200,7 +199,7 @@
   const trendSeries = {{ trend_series | tojson }};
 
   Chart.defaults.color = COL.text;
-  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
   Chart.defaults.font.size = 11;
 
   const baseOpts = {

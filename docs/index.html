@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sirdar — AI training that adapts to you</title>
+    <meta name="description" content="Sirdar is a self-hosted, open-source AI training coach for road cycling and strength. It builds your plan and re-tunes it daily — running on your own Claude subscription, for zero API cost.">
+    <meta name="theme-color" content="#17140F">
+    <meta name="author" content="Sirdar">
+    <meta property="og:title" content="Sirdar — AI training that adapts to you">
+    <meta property="og:description" content="Self-hosted, open-source AI coach for cycling + strength. FTP/TSS, CTL/ATL/TSB, a readiness traffic light and a conversational coach — running on your own Claude subscription for zero API cost.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kingler16.github.io/Sirdar">
+    <meta property="og:image" content="https://kingler16.github.io/Sirdar/logo.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Sirdar — AI training that adapts to you">
+    <meta name="twitter:description" content="Self-hosted, open-source AI coach for cycling + strength. Runs on your own Claude subscription for zero API cost.">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --charcoal: #17140F;
+            --panel: #221D17;
+            --panel-2: #2A241D;
+            --offwhite: #F4EFE8;
+            --taupe: #A6998A;
+            --taupe-dim: #756B5F;
+            --cream: #F2EADF;
+            --clay: #CC6A4E;
+            --clay-hover: #E59072;
+            --teal: #3E9E89;
+            --green: #5FA47E;
+            --amber: #E0A33E;
+            --red: #D85240;
+            --border: rgba(244, 239, 232, 0.09);
+            --border-strong: rgba(244, 239, 232, 0.16);
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--charcoal);
+            color: var(--offwhite);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Warm, earthy ambient glow */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: -20vh -20vw;
+            z-index: -2;
+            background:
+                radial-gradient(46vmin circle at 16% 12%, rgba(204, 106, 78, 0.22), transparent 60%),
+                radial-gradient(40vmin circle at 84% 22%, rgba(62, 158, 137, 0.14), transparent 62%),
+                radial-gradient(50vmin circle at 78% 88%, rgba(204, 106, 78, 0.12), transparent 60%);
+            filter: blur(60px);
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.035;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+            background-size: 200px 200px;
+        }
+
+        ::selection { background: rgba(204, 106, 78, 0.3); color: var(--offwhite); }
+
+        h1, h2, h3, .nav-brand, .stat-value { font-family: 'Sora', sans-serif; }
+
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+        /* ─── Nav ─── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 14px 0;
+            background: rgba(23, 20, 15, 0.72);
+            backdrop-filter: blur(22px) saturate(150%);
+            -webkit-backdrop-filter: blur(22px) saturate(150%);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner { display: flex; justify-content: space-between; align-items: center; }
+        .nav-brand {
+            font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+            color: var(--offwhite); text-decoration: none;
+            display: flex; align-items: center; gap: 11px;
+        }
+        .nav-logo { width: 28px; height: 28px; display: flex; filter: drop-shadow(0 0 10px rgba(204, 106, 78, 0.35)); }
+        .nav-logo img { width: 100%; height: 100%; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a {
+            color: var(--taupe); text-decoration: none; font-size: 14px; font-weight: 500;
+            transition: color 0.18s var(--ease);
+        }
+        .nav-links a:hover { color: var(--offwhite); }
+        .btn-nav {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 15px; border-radius: 9px;
+            background: var(--clay); color: #fff !important;
+            font-size: 13.5px; font-weight: 600;
+            box-shadow: 0 4px 14px rgba(204, 106, 78, 0.3);
+            transition: all 0.18s var(--ease);
+        }
+        .btn-nav:hover { background: var(--clay-hover); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(204, 106, 78, 0.4); }
+
+        /* ─── Hero ─── */
+        .hero { padding: 150px 24px 70px; text-align: center; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 16px; border-radius: 100px;
+            background: rgba(204, 106, 78, 0.12);
+            border: 1px solid rgba(204, 106, 78, 0.28);
+            font-size: 12.5px; font-weight: 600; color: var(--clay-hover);
+            margin-bottom: 28px;
+        }
+        .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--clay); box-shadow: 0 0 8px var(--clay); }
+        .hero h1 {
+            font-size: clamp(40px, 6.4vw, 74px); font-weight: 800;
+            letter-spacing: -2px; line-height: 1.04; margin-bottom: 22px;
+        }
+        .hero h1 .accent {
+            background: linear-gradient(120deg, var(--clay) 0%, var(--clay-hover) 60%, var(--amber) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero-sub {
+            font-size: 17.5px; color: var(--taupe); max-width: 580px;
+            margin: 0 auto 38px; line-height: 1.65;
+        }
+        .hero-sub strong { color: var(--cream); font-weight: 600; }
+        .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 14px 28px; border-radius: 11px;
+            background: linear-gradient(135deg, var(--clay), var(--clay-hover));
+            color: #fff; text-decoration: none; font-size: 15px; font-weight: 600;
+            box-shadow: 0 6px 20px rgba(204, 106, 78, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: all 0.2s var(--ease);
+        }
+        .btn-primary:hover { filter: brightness(1.06); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(204, 106, 78, 0.5); }
+        .btn-primary:active { transform: translateY(0) scale(0.98); }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 14px 28px; border-radius: 11px;
+            background: rgba(244, 239, 232, 0.05);
+            border: 1px solid var(--border-strong);
+            color: var(--offwhite); text-decoration: none; font-size: 15px; font-weight: 500;
+            transition: all 0.2s var(--ease);
+        }
+        .btn-secondary:hover { background: rgba(244, 239, 232, 0.09); transform: translateY(-2px); }
+
+        /* ─── Hero mockup ─── */
+        .mockup-section { padding: 12px 24px 90px; }
+        .mockup {
+            max-width: 760px; margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            box-shadow: var(--shadow), 0 40px 100px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .mockup-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 13px 16px; border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.18);
+        }
+        .mockup-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .mockup-url {
+            flex: 1; text-align: center; font-size: 12px; color: var(--taupe-dim);
+            font-family: 'Inter', monospace; letter-spacing: 0.2px;
+        }
+        .mockup-body { padding: 22px; display: grid; gap: 16px; }
+        @media (min-width: 620px) { .mockup-body { grid-template-columns: 1.45fr 1fr; } }
+
+        .card {
+            background: var(--panel-2); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px;
+        }
+        .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--taupe-dim); font-weight: 600; }
+
+        /* Today card */
+        .today-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+        .today-title { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; margin-top: 3px; }
+        .today-tag { font-size: 11px; font-weight: 600; color: var(--clay-hover); background: rgba(204,106,78,0.14); padding: 3px 9px; border-radius: 6px; }
+        .interval-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--border); font-size: 13.5px; }
+        .interval-row:last-child { border-bottom: none; }
+        .interval-zone { width: 36px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #17140F; flex-shrink: 0; }
+        .z-sweet { background: var(--amber); }
+        .z-vo2 { background: var(--clay-hover); }
+        .z-rec { background: var(--teal); }
+        .interval-row span.w { margin-left: auto; color: var(--taupe); font-variant-numeric: tabular-nums; }
+        .interval-row span.t { color: var(--cream); font-weight: 600; }
+
+        /* Readiness */
+        .ready-card { text-align: center; }
+        .traffic { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 14px 0 10px; }
+        .light-stack { display: flex; gap: 9px; }
+        .light { width: 22px; height: 22px; border-radius: 50%; background: rgba(244,239,232,0.08); transition: all 0.3s; }
+        .light.on.g { background: var(--green); box-shadow: 0 0 16px var(--green); }
+        .light.on.y { background: var(--amber); box-shadow: 0 0 16px var(--amber); }
+        .light.on.r { background: var(--red); box-shadow: 0 0 16px var(--red); }
+        .ready-verdict { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; color: var(--green); }
+        .ready-note { font-size: 12px; color: var(--taupe); margin-top: 2px; }
+
+        /* CTL/ATL/TSB bars */
+        .load-card .bars { display: grid; gap: 11px; margin-top: 13px; }
+        .bar-row { display: grid; grid-template-columns: 38px 1fr 42px; align-items: center; gap: 10px; font-size: 12px; }
+        .bar-row .lbl { color: var(--taupe); font-weight: 600; }
+        .bar-track { height: 8px; border-radius: 5px; background: rgba(244,239,232,0.07); overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 5px; }
+        .bar-row .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--cream); font-weight: 600; }
+
+        /* ─── Section scaffolding ─── */
+        section.block { padding: 80px 24px; }
+        .section-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: var(--clay); text-align: center; margin-bottom: 12px; }
+        .section-title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; text-align: center; letter-spacing: -1px; line-height: 1.12; margin-bottom: 14px; }
+        .section-sub { font-size: 16px; color: var(--taupe); text-align: center; max-width: 580px; margin: 0 auto 52px; }
+
+        /* ─── Features ─── */
+        .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .feature {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; transition: all 0.25s var(--ease);
+        }
+        .feature:hover { transform: translateY(-3px); border-color: rgba(204,106,78,0.35); background: var(--panel-2); }
+        .feature-icon {
+            width: 42px; height: 42px; border-radius: 12px; margin-bottom: 16px;
+            background: rgba(204, 106, 78, 0.14); border: 1px solid rgba(204, 106, 78, 0.25);
+            display: flex; align-items: center; justify-content: center; color: var(--clay-hover);
+        }
+        .feature-icon svg { width: 21px; height: 21px; }
+        .feature h3 { font-size: 15.5px; font-weight: 600; margin-bottom: 7px; letter-spacing: -0.2px; }
+        .feature p { font-size: 13.5px; color: var(--taupe); line-height: 1.58; }
+
+        /* ─── How it works ─── */
+        .how { max-width: 920px; margin: 0 auto; }
+        .steps { display: grid; gap: 14px; }
+        .step {
+            display: flex; gap: 20px; align-items: flex-start;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px 26px;
+        }
+        .step-num {
+            width: 38px; height: 38px; flex-shrink: 0; border-radius: 11px;
+            background: linear-gradient(135deg, var(--clay), var(--clay-hover));
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; color: #fff;
+        }
+        .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .step p { font-size: 14px; color: var(--taupe); }
+
+        /* ─── Training brain highlight ─── */
+        .brain { max-width: 1000px; margin: 0 auto; }
+        .brain-box {
+            background: linear-gradient(160deg, var(--panel-2), var(--panel));
+            border: 1px solid var(--border-strong);
+            border-radius: 22px; padding: clamp(32px, 5vw, 56px);
+            position: relative; overflow: hidden;
+        }
+        .brain-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--clay), var(--teal), transparent);
+        }
+        .brain-grid { display: grid; gap: 22px; margin-top: 30px; }
+        @media (min-width: 720px) { .brain-grid { grid-template-columns: repeat(2, 1fr); } }
+        .brain-item { display: flex; gap: 14px; align-items: flex-start; }
+        .brain-bullet { font-size: 20px; flex-shrink: 0; line-height: 1.3; }
+        .brain-item h4 { font-family: 'Sora', sans-serif; font-size: 15.5px; font-weight: 600; margin-bottom: 3px; }
+        .brain-item p { font-size: 13.5px; color: var(--taupe); line-height: 1.55; }
+        .brain-item code { background: rgba(0,0,0,0.3); color: var(--clay-hover); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+
+        /* ─── Data plugins ─── */
+        .plugins { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 760px; margin: 0 auto 44px; }
+        .plugin {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 16px; border-radius: 100px;
+            background: var(--panel); border: 1px solid var(--border);
+            font-size: 13.5px; font-weight: 500; color: var(--cream);
+            transition: all 0.2s var(--ease);
+        }
+        .plugin:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+        .plugin .pdot { width: 7px; height: 7px; border-radius: 50%; }
+        .pdot.live { background: var(--green); }
+        .pdot.soon { background: var(--amber); }
+        .plugins-legend { text-align: center; font-size: 12.5px; color: var(--taupe-dim); margin-bottom: 46px; }
+        .plugins-legend .pdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin: 0 4px 0 14px; vertical-align: middle; }
+
+        .zero-box {
+            max-width: 760px; margin: 0 auto;
+            background: var(--panel); border: 1px solid rgba(62, 158, 137, 0.28);
+            border-radius: 18px; padding: 32px 36px; text-align: center;
+        }
+        .zero-box h3 { font-size: 21px; font-weight: 700; margin-bottom: 10px; }
+        .zero-box h3 .teal { color: var(--teal); }
+        .zero-box p { font-size: 14.5px; color: var(--taupe); max-width: 560px; margin: 0 auto 18px; }
+        .zero-flow {
+            display: inline-flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;
+            font-family: 'Inter', monospace; font-size: 12.5px;
+        }
+        .zero-chip { padding: 7px 13px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--cream); }
+        .zero-chip.hl { color: var(--clay-hover); border-color: rgba(204,106,78,0.3); }
+        .zero-arrow { color: var(--clay); font-weight: 700; }
+
+        /* ─── CTA ─── */
+        .cta-box {
+            max-width: 640px; margin: 0 auto; text-align: center;
+            background: linear-gradient(160deg, var(--panel-2), var(--panel));
+            border: 1px solid var(--border-strong);
+            border-radius: 22px; padding: 54px 44px;
+            position: relative; overflow: hidden;
+        }
+        .cta-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--clay), transparent);
+        }
+        .cta-box h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
+        .cta-box p { font-size: 15px; color: var(--taupe); margin-bottom: 30px; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+        /* ─── Footer ─── */
+        footer { padding: 40px 24px; border-top: 1px solid var(--border); text-align: center; }
+        .footer-row { font-size: 13.5px; color: var(--taupe); margin-bottom: 14px; }
+        .footer-row a { color: var(--cream); text-decoration: none; transition: color 0.2s; }
+        .footer-row a:hover { color: var(--clay-hover); }
+        .footer-disclaimer { font-size: 12px; color: var(--taupe-dim); max-width: 640px; margin: 0 auto; line-height: 1.55; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 980px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) {
+            .hero { padding: 120px 20px 50px; }
+            .nav-links a:not(.btn-nav) { display: none; }
+        }
+        @media (max-width: 560px) {
+            .hero h1 { letter-spacing: -1.2px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .hero-buttons { flex-direction: column; align-items: stretch; }
+            .step { flex-direction: column; gap: 12px; padding: 20px; }
+            .cta-box, .zero-box, .brain-box { padding: 32px 22px; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="wrap nav-inner">
+        <a href="#top" class="nav-brand">
+            <span class="nav-logo"><img src="logo-cream.png" alt="Sirdar logo"></span>
+            Sirdar
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How it works</a>
+            <a href="#brain">Training brain</a>
+            <a href="https://github.com/Kingler16/Sirdar" class="btn-nav">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                GitHub
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="top">
+    <div class="badge"><span class="dot"></span> Zero API cost · Self-hosted</div>
+    <h1>AI training that<br><span class="accent">adapts to you</span></h1>
+    <p class="hero-sub">A self-hosted, open-source coach for <strong>road cycling and strength</strong>. It builds your plan and re-tunes it every day to your readiness, the weather, and your calendar — running entirely on <strong>your own Claude subscription</strong>.</p>
+    <div class="hero-buttons">
+        <a href="https://github.com/Kingler16/Sirdar" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            View on GitHub
+        </a>
+        <a href="#how" class="btn-secondary">Quick start →</a>
+    </div>
+</section>
+
+<!-- Hero mockup -->
+<section class="mockup-section">
+    <div class="mockup" role="img" aria-label="Stylized Sirdar dashboard showing today's session, readiness traffic light, and a fitness/fatigue/form load chart">
+        <div class="mockup-bar">
+            <span class="mockup-dot" style="background:#D85240"></span>
+            <span class="mockup-dot" style="background:#E0A33E"></span>
+            <span class="mockup-dot" style="background:#5FA47E"></span>
+            <span class="mockup-url">sirdar.local:8000</span>
+        </div>
+        <div class="mockup-body">
+            <!-- Today card -->
+            <div class="card">
+                <div class="today-head">
+                    <div>
+                        <div class="card-label">Today · Cycling</div>
+                        <div class="today-title">Sweet Spot 3×15</div>
+                    </div>
+                    <span class="today-tag">Prescribed</span>
+                </div>
+                <div class="interval-row"><span class="interval-zone z-rec">Z1</span><span class="t">Warm-up</span><span class="w">15 min · 130 W</span></div>
+                <div class="interval-row"><span class="interval-zone z-sweet">SS</span><span class="t">3 × 15 min</span><span class="w">250 W · 5 min rest</span></div>
+                <div class="interval-row"><span class="interval-zone z-rec">Z1</span><span class="t">Cool-down</span><span class="w">10 min · 120 W</span></div>
+                <div class="interval-row"><span class="t" style="color:var(--clay-hover)">Target load</span><span class="w">82 TSS · 70 min</span></div>
+            </div>
+            <!-- Right column: readiness + load -->
+            <div style="display:grid; gap:16px;">
+                <div class="card ready-card">
+                    <div class="card-label">Readiness</div>
+                    <div class="traffic">
+                        <div class="light-stack">
+                            <span class="light on g"></span>
+                            <span class="light y"></span>
+                            <span class="light r"></span>
+                        </div>
+                    </div>
+                    <div class="ready-verdict">Green · go</div>
+                    <div class="ready-note">HRV +4% · sleep 7h50</div>
+                </div>
+                <div class="card load-card">
+                    <div class="card-label">Fitness / Fatigue / Form</div>
+                    <div class="bars">
+                        <div class="bar-row"><span class="lbl">CTL</span><span class="bar-track"><span class="bar-fill" style="width:72%; background:var(--teal)"></span></span><span class="val">58</span></div>
+                        <div class="bar-row"><span class="lbl">ATL</span><span class="bar-track"><span class="bar-fill" style="width:58%; background:var(--clay)"></span></span><span class="val">47</span></div>
+                        <div class="bar-row"><span class="lbl">TSB</span><span class="bar-track"><span class="bar-fill" style="width:30%; background:var(--green)"></span></span><span class="val">+11</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="block" id="features">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">A coach, not a spreadsheet</h2>
+    <p class="section-sub">Everything you need to train with intent — self-hosted, private, and free of metered AI bills.</p>
+    <div class="wrap features-grid">
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 0l-3 4 5 .5 1.5 7M9 8h4l-2 9.5"/></svg></div>
+            <h3>Cycling load model</h3>
+            <p>FTP-based zones, per-session TSS, and a Fitness / Fatigue / Form model (CTL · ATL · TSB).</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 9l6-6M15 21l6-6"/></svg></div>
+            <h3>Strength progression</h3>
+            <p>Prescribed weight × sets × reps with RIR/RPE-driven progression and deloads.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></div>
+            <h3>Concurrent training</h3>
+            <p>Schedules bike + strength together to minimize the interference effect.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="7" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg></div>
+            <h3>Readiness traffic light</h3>
+            <p>HRV trend, resting HR, sleep and a quick check → green / yellow / red each morning.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+            <h3>Conversational coach</h3>
+            <p>Talk to your coach in the web app — the plan is built <em>with</em> you, not handed down.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+            <h3>FIT / GPX import</h3>
+            <p>Drop activity files in the browser or a watch folder — deduplicated automatically.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M12 12v4M10 14h4"/></svg></div>
+            <h3>Pluggable data</h3>
+            <p>Garmin · Strava · Apple Health · file import — enable only the sources you have.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div>
+            <h3>PWA · DE / EN</h3>
+            <p>Installable on your phone, no app store. Fully bilingual interface, runs on a Raspberry Pi.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="block" id="how">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">Three steps to a plan</h2>
+    <p class="section-sub">No Docker, no cloud, no per-token bill. Runs from your terminal on hardware you own.</p>
+    <div class="how steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <h3>Connect your data</h3>
+                <p>Run onboarding in the browser, then bring your history in — drop a FIT/GPX file, or wire up Garmin, Strava or Apple Health later. Start with nothing but a morning check if you like.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div>
+                <h3>Talk to your coach</h3>
+                <p>Tell Sirdar your goal and constraints. It asks questions, weighs your load and readiness, and writes a periodized plan — explaining the <em>why</em> behind every session.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div>
+                <h3>Train the prescribed plan</h3>
+                <p>Open "Today" for exact intervals, watts and weights. Each morning the readiness light re-tunes the session, and a missed day rebalances the week instead of piling up.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Training brain -->
+<section class="block" id="brain">
+    <div class="brain">
+        <p class="section-label">The training brain</p>
+        <h2 class="section-title">Sport science, enforced</h2>
+        <p class="section-sub">The AI works inside hard guardrails — so it builds you up without digging a hole.</p>
+        <div class="brain-box">
+            <div class="brain-grid">
+                <div class="brain-item">
+                    <span class="brain-bullet">🚴</span>
+                    <div>
+                        <h4>FTP zones &amp; TSS</h4>
+                        <p>Every ride is anchored to your FTP — power zones and a training-stress score per session, so load is comparable day to day.</p>
+                    </div>
+                </div>
+                <div class="brain-item">
+                    <span class="brain-bullet">📈</span>
+                    <div>
+                        <h4>CTL / ATL / TSB + ramp-rate guardrail</h4>
+                        <p>A rolling fitness / fatigue / form model with a hard cap of <code>≤ +3–5 CTL/week</code> so progression stays sustainable.</p>
+                    </div>
+                </div>
+                <div class="brain-item">
+                    <span class="brain-bullet">🔀</span>
+                    <div>
+                        <h4>Concurrent-training rules</h4>
+                        <p>Leg-heavy strength is spaced from key bike sessions. Bundle the hard days, bundle the easy days, sequence by your primary goal.</p>
+                    </div>
+                </div>
+                <div class="brain-item">
+                    <span class="brain-bullet">🚦</span>
+                    <div>
+                        <h4>Readiness auto-regulation</h4>
+                        <p><strong style="color:var(--green)">🟢</strong> train as planned · <strong style="color:var(--amber)">🟡</strong> soften the hard one · <strong style="color:var(--red)">🔴</strong> swap for recovery and rebalance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Data plugins + zero cost -->
+<section class="block">
+    <p class="section-label">Data plugins</p>
+    <h2 class="section-title">Bring the data you already have</h2>
+    <p class="section-sub">Every source is an optional plugin. Enable what you own — combine freely.</p>
+    <div class="plugins">
+        <span class="plugin"><span class="pdot live"></span> File import (FIT/GPX)</span>
+        <span class="plugin"><span class="pdot soon"></span> Open-Meteo weather</span>
+        <span class="plugin"><span class="pdot soon"></span> CalDAV calendar</span>
+        <span class="plugin"><span class="pdot soon"></span> Garmin</span>
+        <span class="plugin"><span class="pdot soon"></span> Apple Health</span>
+        <span class="plugin"><span class="pdot soon"></span> Strava</span>
+        <span class="plugin"><span class="pdot soon"></span> OpenRouteService</span>
+    </div>
+    <p class="plugins-legend"><span class="pdot live"></span> available <span class="pdot soon"></span> on the roadmap &nbsp;·&nbsp; Heads up: Strava restricts AI use and needs a paid tier from mid-2026 — recommended default is Garmin + file import.</p>
+
+    <div class="zero-box">
+        <h3>Zero API cost, by design <span class="teal">— 0 €</span></h3>
+        <p>Sirdar never calls a metered API. It drives the Claude Code CLI you already pay for, so your Claude Max/Pro subscription is the only "AI bill" — the same login you use in your terminal.</p>
+        <div class="zero-flow">
+            <span class="zero-chip">context.json</span>
+            <span class="zero-arrow">→</span>
+            <span class="zero-chip hl">claude --print</span>
+            <span class="zero-arrow">→</span>
+            <span class="zero-chip">plan.json</span>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="block">
+    <div class="cta-box">
+        <h2>Own your coach</h2>
+        <p>Sirdar is free, open source, and runs on your hardware. Your training data never leaves home.</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/Kingler16/Sirdar" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                Get started on GitHub
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p class="footer-row">Sirdar · MIT License · <a href="https://github.com/Kingler16/Sirdar">GitHub</a></p>
+    <p class="footer-disclaimer">Sirdar is an educational, hobby project. It is <strong>not medical advice and not professional training advice</strong>, and the AI can be wrong. Consult a doctor before starting or changing a training program. You train at your own risk.</p>
+</footer>
+
+</body>
+</html>

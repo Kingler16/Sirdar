@@ -112,13 +112,14 @@ async def manifest(request: Request):
         "scope": f"{base}/",
         "display": "standalone",
         "orientation": "portrait",
-        "theme_color": "#0d0f12",
-        "background_color": "#0d0f12",
+        "theme_color": "#17140F",
+        "background_color": "#17140F",
         "lang": resolve_lang(request),
         "dir": "ltr",
         "categories": ["health", "fitness", "sports"],
         "icons": [
-            {"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"},
+            {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
         ],
     }
     return JSONResponse(payload, media_type="application/manifest+json")

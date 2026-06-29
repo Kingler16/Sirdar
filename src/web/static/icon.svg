@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sirdar">
-  <rect width="512" height="512" rx="112" fill="#0d0f12"/>
-  <!-- Mountain (the summit the sirdar leads to) -->
-  <path d="M96 372 L208 168 L268 280 L316 196 L416 372 Z" fill="none" stroke="#4f9dff" stroke-width="26" stroke-linejoin="round" stroke-linecap="round"/>
-  <!-- Snow cap -->
-  <path d="M188 204 L208 168 L230 204 L216 214 L200 206 Z" fill="#4f9dff"/>
-  <!-- Path / route line -->
-  <path d="M150 420 Q256 360 362 420" fill="none" stroke="#34d399" stroke-width="18" stroke-linecap="round"/>
-</svg>
