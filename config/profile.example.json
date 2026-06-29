@@ -15,18 +15,25 @@
       "zone_model": "coggan7",
       "indoor": true,
       "outdoor": true,
-      "has_powermeter": false
+      "has_powermeter": false,
+      "current_state": {
+        "_comment": "Captured at onboarding, then discussed with the AI to build the plan.",
+        "weekly_hours": null,
+        "weekly_km": null,
+        "typical_sessions": []
+      }
     },
     "strength": {
       "enabled": true,
       "experience": "intermediate",
       "preferred_split": "upper_lower",
-      "equipment": "gym",
-      "main_lifts": {
-        "squat_kg": null,
-        "deadlift_kg": null,
-        "bench_kg": null,
-        "overhead_press_kg": null
+      "equipment_available": [],
+      "current_state": {
+        "_comment": "Captured at onboarding, then discussed with the AI to build the plan.",
+        "frequency_per_week": null,
+        "current_exercises": [
+          { "exercise": "", "sets": null, "reps": null, "weight_kg": null }
+        ]
       }
     }
   },

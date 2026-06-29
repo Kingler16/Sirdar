@@ -90,6 +90,18 @@ Parametrisierte Bausteine, z. B. *Sweet Spot* `{zone: 88-94% FTP, intervalle: 3�
 
 **Mentales Modell:** *Belastung → Erholung → Anpassung.* Drei Hebel (Frequenz, Volumen, Intensität) — nie mehrere gleichzeitig hochfahren.
 
+### 6.0 Plan-Workflow pro Sportart: Ist-Zustand → Gespräch → konkrete Vorgaben
+Der Plan entsteht **konversationell**, nicht als Blackbox:
+1. **Ist-Zustand erfassen** (Onboarding, pro Sportart):
+   - **Kraft:** verfügbare **Geräte**, aktuelle **Trainingsfrequenz**, aktuelle **Übungen** mit **Sätzen/Wdh./Gewicht**.
+   - **Rad:** aktuelle **Wochenstunden/-km**, FTP, typische Ausfahrten, Indoor/Outdoor, Powermeter.
+   - **Andere Sportarten:** analog, sportartgerecht.
+2. **Mit der KI besprechen:** Der User diskutiert Ziel & Plan im Chat; die KI fragt nach, schlägt vor, justiert.
+3. **Konkrete Vorgaben im Plan:** Jede Einheit ist **präskriptiv** —
+   - **Kraft:** je Übung **Gewicht + Sätze × Wdh. + Ziel-RIR** (progressiv über die Wochen).
+   - **Rad/Ausdauer:** Intervalle mit **Ziel-Watt/Zonen + Dauer/Pausen** (+ Route/Höhenprofil).
+   Gewichte/Watt werden aus dem erfassten Ist-Zustand abgeleitet und progressiv gesteigert.
+
 ### 6.1 Plan-Generierung (wöchentlich / bei Bedarf)
 1. **Normieren:** Rad über **FTP** (Zonen + TSS), Kraft über **Arbeitsgewichte/RIR**.
 2. **Load steuern:** **CTL/ATL/TSB**-Modell, **Ramp Rate ≤ +3–5/Woche als harte Leitplanke**.
@@ -130,9 +142,9 @@ Jede Integration ist ein eigenständiges Modul unter `src/data/sources/`, das ei
 
 | Screen | Inhalt | MVP |
 |---|---|---|
-| **Onboarding/Setup** | Sportarten, Ziele, FTP/Arbeitsgewichte, Integrationen, Autonomie-Grad | ✅ |
+| **Onboarding/Setup** | Sportarten, Ziele, **Ist-Zustand pro Sportart** (Kraft: Geräte + aktuelle Übungen/Gewichte; Rad: Stunden/km + FTP), Integrationen, Autonomie-Grad | ✅ |
 | **Health-Overview** | Readiness-Ampel heute, HRV/RHR/Schlaf-Trends, **CTL/ATL/TSB-Chart**, Wochen-Load | ✅ |
-| **Trainingsplan** | Heute + Woche; je Einheit: **Rad → Intervalle/Zonen + Route & Höhenprofil**, **Kraft → Übungen/Sätze/RIR**; Status + „Warum"-Begründung | ✅ |
+| **Trainingsplan** | Heute + Woche, **konversationell mit der KI besprechbar**; je Einheit **präskriptiv**: **Rad → Intervalle mit Ziel-Watt/Zonen + Route & Höhenprofil**, **Kraft → Übungen mit Gewicht + Sätze × Wdh. + RIR**; Status + „Warum"-Begründung | ✅ |
 | **Ziele** | Ziele definieren/tracken, Fortschritt vs. Baseline, Priorität (primary/maintenance) | ✅ |
 | **Coach-Chat** | Frei mit dem Coach reden, Rückfragen, Plan-Erklärungen | Phase 2 |
 | **Kalender/Periodisierung** | Phasen (Base/Build/Peak), Events, Deload-Wochen | Phase 4 |
