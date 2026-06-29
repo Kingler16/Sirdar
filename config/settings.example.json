@@ -2,6 +2,10 @@
   "_comment": "Copy to settings.json and fill in. settings.json is git-ignored.",
   "locale": "de",
   "units": "metric",
+  "web": {
+    "host": "0.0.0.0",
+    "port": 8000
+  },
   "claude": {
     "oauth_token": "",
     "model": "claude-opus-4-8",

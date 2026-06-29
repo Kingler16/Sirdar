@@ -76,7 +76,7 @@ Ein **selbst-gehosteter, quelloffener KI-Trainings-Coach**, der — wie Velora f
 - **`settings.json`** — aktivierte Integrationen + Keys/Tokens, **Autonomie-Grad**, Zeitplan, Claude-OAuth-Token, Locale
 
 ### SQLite (`training.db`)
-- **`workouts`** — `(id, datum, sportart, typ, dauer, distanz, np, if, tss, avg_hr, quelle, raw_ref, notiz)`
+- **`workouts`** — `(id, datum, sportart, typ, dauer, distanz, np, if_, tss, avg_hr, quelle, raw_ref, notiz)` (`if_` statt `if`, da SQL-Keyword)
 - **`strength_logs`** — `(workout_id, übung, satz, wdh, gewicht, rir)`
 - **`health_metrics`** — `(datum, hrv, rhr, schlaf_h, schlaf_qualität, gewicht, vo2max, soreness, stimmung, readiness_score, quelle)`
 - **`load`** — `(datum, ctl, atl, tsb)` (abgeleitet)
