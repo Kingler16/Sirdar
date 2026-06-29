@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.profile.title }}{% endblock %}
+
+{% set cyc = profile.get('sports', {}).get('cycling', {}) %}
+{% set cyc_state = cyc.get('current_state', {}) %}
+{% set str = profile.get('sports', {}).get('strength', {}) %}
+{% set str_state = str.get('current_state', {}) %}
+{% set exercises = str_state.get('current_exercises', []) %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.profile.title }}</h1>
+    <p class="page-subtitle">{{ t.profile.subtitle }}</p>
+</section>
+
+{% if saved %}<div class="flash ok">{{ t.common.saved }}</div>{% endif %}
+
+<form method="post" action="/profile" class="stack">
+
+    <!-- ── Persönliches ─────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.profile.personal }}</h2>
+        <div class="field">
+            <label for="name">{{ t.profile.name }}</label>
+            <input type="text" id="name" name="name" class="input" value="{{ profile.get('name') or '' }}">
+        </div>
+        <div class="grid-2">
+            <div class="field">
+                <label for="birth_year">{{ t.profile.birth_year }}</label>
+                <input type="number" id="birth_year" name="birth_year" class="input" min="1900" max="2100"
+                       value="{% if profile.get('birth_year') is not none %}{{ profile.get('birth_year') }}{% endif %}">
+            </div>
+            <div class="field">
+                <label for="sex">{{ t.profile.sex }}</label>
+                <select id="sex" name="sex" class="input">
+                    <option value="" {% if not profile.get('sex') %}selected{% endif %}>—</option>
+                    <option value="m" {% if profile.get('sex') == 'm' %}selected{% endif %}>{{ t.profile.sex_m }}</option>
+                    <option value="f" {% if profile.get('sex') == 'f' %}selected{% endif %}>{{ t.profile.sex_f }}</option>
+                    <option value="d" {% if profile.get('sex') == 'd' %}selected{% endif %}>{{ t.profile.sex_d }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="height_cm">{{ t.profile.height_cm }}</label>
+                <input type="number" id="height_cm" name="height_cm" class="input" min="0" step="0.1"
+                       value="{% if profile.get('height_cm') is not none %}{{ profile.get('height_cm') }}{% endif %}">
+            </div>
+            <div class="field">
+                <label for="weight_kg">{{ t.profile.weight_kg }}</label>
+                <input type="number" id="weight_kg" name="weight_kg" class="input" min="0" step="0.1"
+                       value="{% if profile.get('weight_kg') is not none %}{{ profile.get('weight_kg') }}{% endif %}">
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Rad (cycling) ────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.profile.cycling }}</h2>
+        <label class="check">
+            <input type="checkbox" name="cycling_enabled" {% if cyc.get('enabled') %}checked{% endif %}>
+            <span>{{ t.profile.cycling_enabled }}</span>
+        </label>
+        <div class="grid-2">
+            <div class="field">
+                <label for="cycling_experience">{{ t.profile.experience }}</label>
+                <select id="cycling_experience" name="cycling_experience" class="input">
+                    <option value="beginner" {% if cyc.get('experience') == 'beginner' %}selected{% endif %}>{{ t.profile.exp_beginner }}</option>
+                    <option value="intermediate" {% if cyc.get('experience') == 'intermediate' %}selected{% endif %}>{{ t.profile.exp_intermediate }}</option>
+                    <option value="advanced" {% if cyc.get('experience') == 'advanced' %}selected{% endif %}>{{ t.profile.exp_advanced }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="zone_model">{{ t.profile.zone_model }}</label>
+                <input type="text" id="zone_model" name="zone_model" class="input"
+                       value="{{ cyc.get('zone_model') or '' }}">
+            </div>
+            <div class="field">
+                <label for="ftp_watts">{{ t.profile.ftp_watts }}</label>
+                <input type="number" id="ftp_watts" name="ftp_watts" class="input" min="0" step="1"
+                       value="{% if cyc.get('ftp_watts') is not none %}{{ cyc.get('ftp_watts') }}{% endif %}">
+            </div>
+            <div class="field">
+                <label for="hr_max">{{ t.profile.hr_max }}</label>
+                <input type="number" id="hr_max" name="hr_max" class="input" min="0" step="1"
+                       value="{% if cyc.get('hr_max') is not none %}{{ cyc.get('hr_max') }}{% endif %}">
+            </div>
+        </div>
+        <div class="check-row">
+            <label class="check">
+                <input type="checkbox" name="cycling_indoor" {% if cyc.get('indoor') %}checked{% endif %}>
+                <span>{{ t.profile.indoor }}</span>
+            </label>
+            <label class="check">
+                <input type="checkbox" name="cycling_outdoor" {% if cyc.get('outdoor') %}checked{% endif %}>
+                <span>{{ t.profile.outdoor }}</span>
+            </label>
+            <label class="check">
+                <input type="checkbox" name="has_powermeter" {% if cyc.get('has_powermeter') %}checked{% endif %}>
+                <span>{{ t.profile.has_powermeter }}</span>
+            </label>
+        </div>
+        <h3 class="card-sub">{{ t.profile.current_state }}</h3>
+        <div class="grid-2">
+            <div class="field">
+                <label for="cycling_weekly_hours">{{ t.profile.weekly_hours }}</label>
+                <input type="number" id="cycling_weekly_hours" name="cycling_weekly_hours" class="input" min="0" step="0.5"
+                       value="{% if cyc_state.get('weekly_hours') is not none %}{{ cyc_state.get('weekly_hours') }}{% endif %}">
+            </div>
+            <div class="field">
+                <label for="cycling_weekly_km">{{ t.profile.weekly_km }}</label>
+                <input type="number" id="cycling_weekly_km" name="cycling_weekly_km" class="input" min="0" step="1"
+                       value="{% if cyc_state.get('weekly_km') is not none %}{{ cyc_state.get('weekly_km') }}{% endif %}">
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Kraft (strength) ─────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.profile.strength }}</h2>
+        <label class="check">
+            <input type="checkbox" name="strength_enabled" {% if str.get('enabled') %}checked{% endif %}>
+            <span>{{ t.profile.strength_enabled }}</span>
+        </label>
+        <div class="grid-2">
+            <div class="field">
+                <label for="strength_experience">{{ t.profile.experience }}</label>
+                <select id="strength_experience" name="strength_experience" class="input">
+                    <option value="beginner" {% if str.get('experience') == 'beginner' %}selected{% endif %}>{{ t.profile.exp_beginner }}</option>
+                    <option value="intermediate" {% if str.get('experience') == 'intermediate' %}selected{% endif %}>{{ t.profile.exp_intermediate }}</option>
+                    <option value="advanced" {% if str.get('experience') == 'advanced' %}selected{% endif %}>{{ t.profile.exp_advanced }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="preferred_split">{{ t.profile.preferred_split }}</label>
+                <select id="preferred_split" name="preferred_split" class="input">
+                    <option value="full_body" {% if str.get('preferred_split') == 'full_body' %}selected{% endif %}>{{ t.profile.split_full_body }}</option>
+                    <option value="upper_lower" {% if str.get('preferred_split') == 'upper_lower' %}selected{% endif %}>{{ t.profile.split_upper_lower }}</option>
+                    <option value="ppl" {% if str.get('preferred_split') == 'ppl' %}selected{% endif %}>{{ t.profile.split_ppl }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="strength_frequency">{{ t.profile.frequency_per_week }}</label>
+                <input type="number" id="strength_frequency" name="strength_frequency" class="input" min="0" step="1"
+                       value="{% if str_state.get('frequency_per_week') is not none %}{{ str_state.get('frequency_per_week') }}{% endif %}">
+            </div>
+        </div>
+        <div class="field">
+            <label for="equipment_available">{{ t.profile.equipment_available }}</label>
+            <input type="text" id="equipment_available" name="equipment_available" class="input"
+                   value="{{ (str.get('equipment_available') or []) | join(', ') }}">
+            <p class="field-hint">{{ t.profile.equipment_hint }}</p>
+        </div>
+
+        <h3 class="card-sub">{{ t.profile.current_exercises }}</h3>
+        <p class="field-hint">{{ t.profile.current_exercises_hint }}</p>
+        <div class="exercise-head">
+            <span>{{ t.profile.exercise }}</span>
+            <span>{{ t.profile.sets }}</span>
+            <span>{{ t.profile.reps }}</span>
+            <span>{{ t.profile.weight }}</span>
+            <span></span>
+        </div>
+        <!-- Dynamische Übungs-Liste: neue Zeilen via HTMX angehängt, Entfernen clientseitig -->
+        <div id="exercise-list">
+            {% for ex in exercises %}
+                {% include "partials/exercise_row.html" %}
+            {% endfor %}
+        </div>
+        <button type="button" class="btn-secondary"
+                hx-get="/profile/exercise-row"
+                hx-target="#exercise-list"
+                hx-swap="beforeend">
+            + {{ t.profile.add_exercise }}
+        </button>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">{{ t.common.save }}</button>
+    </div>
+</form>
+{% endblock %}

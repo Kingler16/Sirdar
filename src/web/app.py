@@ -1,10 +1,11 @@
-"""FastAPI-Dashboard für Sirdar (Phase 0).
+"""FastAPI-Dashboard für Sirdar.
 
 Routen:
   GET /                      -> Dashboard (Health-Overview-Platzhalter + Claude-Status)
+  /plan /profile /goals /settings -> Onboarding-/Eingabe-Seiten (src/web/routes/)
   GET /manifest.webmanifest  -> PWA-Manifest
   GET /sw.js                 -> Service Worker (Root-Scope)
-  /static/...                -> CSS/Icons
+  /static/...                -> CSS/Icons/JS (HTMX)
 
 Sprache (?lang=de|en) wird per Cookie gemerkt; Default aus settings.locale.
 Aufbau folgt Velora (src/web/app.py, src/web/routes/pwa.py).
@@ -13,44 +14,21 @@ Aufbau folgt Velora (src/web/app.py, src/web/routes/pwa.py).
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
-from src.config import get_locale
 from src.core.claude import claude_available
-from src.web.i18n import SUPPORTED_LANGS, get_translations
+from src.web.deps import STATIC_DIR, ctx, resolve_lang, templates
+from src.web.i18n import SUPPORTED_LANGS
+from src.web.routes import onboarding_router
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
-STATIC_DIR = BASE_DIR / "static"
-
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
 app = FastAPI(title="Sirdar")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-
-def _resolve_lang(request: Request) -> str:
-    """Sprache bestimmen: Cookie > settings.locale > 'de'."""
-    cookie = request.cookies.get("sirdar_lang")
-    if cookie in SUPPORTED_LANGS:
-        return cookie
-    locale = get_locale()
-    return locale if locale in SUPPORTED_LANGS else "de"
-
-
-def _ctx(request: Request, page: str, **extra) -> dict:
-    """Baut den Template-Kontext mit Übersetzungen."""
-    lang = _resolve_lang(request)
-    ctx = {"request": request, "page": page, "lang": lang, "t": get_translations(lang)}
-    ctx.update(extra)
-    return ctx
+app.include_router(onboarding_router)
 
 
 # ─── HTML Pages ──────────────────────────────────────────────
@@ -60,7 +38,7 @@ async def dashboard(request: Request):
     """Dashboard mit Health-Overview-Platzhalter + Claude-CLI-Status."""
     return templates.TemplateResponse(
         request, "dashboard.html",
-        _ctx(request, "dashboard", claude_ok=claude_available()),
+        ctx(request, "dashboard", claude_ok=claude_available()),
     )
 
 
@@ -101,7 +79,7 @@ async def manifest(request: Request):
         "orientation": "portrait",
         "theme_color": "#0d0f12",
         "background_color": "#0d0f12",
-        "lang": _resolve_lang(request),
+        "lang": resolve_lang(request),
         "dir": "ltr",
         "categories": ["health", "fitness", "sports"],
         "icons": [

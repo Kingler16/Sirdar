@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.goals.title }}{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.goals.title }}</h1>
+    <p class="page-subtitle">{{ t.goals.subtitle }}</p>
+</section>
+
+{% if saved %}<div class="flash ok">{{ t.common.saved }}</div>{% endif %}
+
+<!-- ── Liste der Ziele ──────────────────────────────────────── -->
+<section class="card">
+    <h2 class="card-title">{{ t.goals.your_goals }}</h2>
+    {% if not goals %}
+        <p class="card-body">{{ t.goals.no_goals }}</p>
+    {% else %}
+        <ul class="goal-list">
+            {% for g in goals %}
+            <li class="goal-item">
+                <div class="goal-main">
+                    <span class="goal-type">{{ g.get('type') or g.get('id') }}</span>
+                    <span class="badge {% if g.get('priority') == 'primary' %}badge-primary{% else %}badge-muted{% endif %}">
+                        {% if g.get('priority') == 'primary' %}{{ t.goals.priority_primary }}{% else %}{{ t.goals.priority_maintenance }}{% endif %}
+                    </span>
+                </div>
+                <div class="goal-meta">
+                    {% if g.get('sport') %}<span>{{ g.get('sport') }}</span>{% endif %}
+                    {% if g.get('baseline') is not none %}<span>{{ t.goals.baseline }}: {{ g.get('baseline') }}</span>{% endif %}
+                    {% if g.get('target') is not none %}<span>{{ t.goals.target }}: {{ g.get('target') }}</span>{% endif %}
+                    {% if g.get('event_date') %}<span>{{ t.goals.event_date }}: {{ g.get('event_date') }}</span>{% endif %}
+                    {% if g.get('horizon_weeks') is not none %}<span>{{ g.get('horizon_weeks') }} {{ t.goals.horizon_weeks }}</span>{% endif %}
+                </div>
+                <div class="goal-actions">
+                    <a class="btn-secondary btn-sm" href="/goals?edit={{ g.get('id') }}">{{ t.common.edit }}</a>
+                    <form method="post" action="/goals/{{ g.get('id') }}/delete" class="inline-form">
+                        <button type="submit" class="btn-danger btn-sm">{{ t.common.delete }}</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>
+
+<!-- ── Ziel hinzufügen / bearbeiten ─────────────────────────── -->
+<section class="card">
+    <h2 class="card-title">{% if editing %}{{ t.goals.edit_goal }}{% else %}{{ t.goals.add_goal }}{% endif %}</h2>
+    <form method="post" action="/goals" class="stack">
+        <input type="hidden" name="goal_id" value="{{ editing.get('id') if editing else '' }}">
+        <div class="grid-2">
+            <div class="field">
+                <label for="type">{{ t.goals.type }}</label>
+                <input type="text" id="type" name="type" class="input"
+                       value="{{ editing.get('type') if editing else '' }}">
+                <p class="field-hint">{{ t.goals.type_hint }}</p>
+            </div>
+            <div class="field">
+                <label for="sport">{{ t.goals.sport }}</label>
+                <select id="sport" name="sport" class="input">
+                    <option value="cycling" {% if editing and editing.get('sport') == 'cycling' %}selected{% endif %}>{{ t.goals.sport_cycling }}</option>
+                    <option value="strength" {% if editing and editing.get('sport') == 'strength' %}selected{% endif %}>{{ t.goals.sport_strength }}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="baseline">{{ t.goals.baseline }}</label>
+                <input type="text" id="baseline" name="baseline" class="input"
+                       value="{{ editing.get('baseline') if editing and editing.get('baseline') is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="target">{{ t.goals.target }}</label>
+                <input type="text" id="target" name="target" class="input"
+                       value="{{ editing.get('target') if editing and editing.get('target') is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="event_date">{{ t.goals.event_date }}</label>
+                <input type="date" id="event_date" name="event_date" class="input"
+                       value="{{ editing.get('event_date') if editing and editing.get('event_date') else '' }}">
+            </div>
+            <div class="field">
+                <label for="horizon_weeks">{{ t.goals.horizon_weeks }}</label>
+                <input type="number" id="horizon_weeks" name="horizon_weeks" class="input" min="0" step="1"
+                       value="{{ editing.get('horizon_weeks') if editing and editing.get('horizon_weeks') is not none else '' }}">
+            </div>
+            <div class="field">
+                <label for="priority">{{ t.goals.priority }}</label>
+                <select id="priority" name="priority" class="input">
+                    <option value="primary" {% if editing and editing.get('priority') == 'primary' %}selected{% endif %}>{{ t.goals.priority_primary }}</option>
+                    <option value="maintenance" {% if editing and editing.get('priority') == 'maintenance' %}selected{% endif %}>{{ t.goals.priority_maintenance }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            {% if editing %}<a class="btn-secondary" href="/goals">{{ t.common.cancel }}</a>{% endif %}
+            <button type="submit" class="btn-primary">{{ t.common.save }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

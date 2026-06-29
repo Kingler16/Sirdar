@@ -13,6 +13,8 @@
     <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
     <link rel="apple-touch-icon" href="/static/icon.svg">
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- HTMX (lokal gehostet, kein CDN — funktioniert offline/in der PWA) -->
+    <script src="/static/js/htmx.min.js" defer></script>
     {% block head %}{% endblock %}
 </head>
 <body data-page="{{ page }}">
@@ -32,15 +34,28 @@
             {% block content %}{% endblock %}
         </main>
 
-        <!-- Bottom-Nav-Platzhalter — Routen folgen in Phase 1+ -->
+        <!-- Bottom-Nav: echte Routen (Dashboard, Plan, Ziele, Profil, Settings) -->
         <nav class="bottom-nav" aria-label="{{ t.app_name }}">
-            <a href="/" class="nav-item {% if page == 'dashboard' %}active{% endif %}">
+            <a href="/" class="nav-item {% if page == 'dashboard' %}active{% endif %}"
+               {% if page == 'dashboard' %}aria-current="page"{% endif %}>
                 <span class="nav-icon">◎</span><span class="nav-label">{{ t.nav.dashboard }}</span>
             </a>
-            <span class="nav-item disabled"><span class="nav-icon">▤</span><span class="nav-label">{{ t.nav.plan }}</span></span>
-            <span class="nav-item disabled"><span class="nav-icon">♡</span><span class="nav-label">{{ t.nav.health }}</span></span>
-            <span class="nav-item disabled"><span class="nav-icon">◇</span><span class="nav-label">{{ t.nav.goals }}</span></span>
-            <span class="nav-item disabled"><span class="nav-icon">✦</span><span class="nav-label">{{ t.nav.chat }}</span></span>
+            <a href="/plan" class="nav-item {% if page == 'plan' %}active{% endif %}"
+               {% if page == 'plan' %}aria-current="page"{% endif %}>
+                <span class="nav-icon">▤</span><span class="nav-label">{{ t.nav.plan }}</span>
+            </a>
+            <a href="/goals" class="nav-item {% if page == 'goals' %}active{% endif %}"
+               {% if page == 'goals' %}aria-current="page"{% endif %}>
+                <span class="nav-icon">◇</span><span class="nav-label">{{ t.nav.goals }}</span>
+            </a>
+            <a href="/profile" class="nav-item {% if page == 'profile' %}active{% endif %}"
+               {% if page == 'profile' %}aria-current="page"{% endif %}>
+                <span class="nav-icon">◐</span><span class="nav-label">{{ t.nav.profile }}</span>
+            </a>
+            <a href="/settings" class="nav-item {% if page == 'settings' %}active{% endif %}"
+               {% if page == 'settings' %}aria-current="page"{% endif %}>
+                <span class="nav-icon">⚙</span><span class="nav-label">{{ t.nav.settings }}</span>
+            </a>
         </nav>
     </div>
 

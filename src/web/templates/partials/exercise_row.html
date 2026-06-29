@@ -1,0 +1,20 @@
+{# Eine Kraft-Übungszeile. Wird beim Laden (vorbefüllt aus profile.json) und per
+   HTMX (leer, via /profile/exercise-row) gerendert. Die Felder sind parallele
+   Arrays (ex_exercise/ex_sets/ex_reps/ex_weight) — siehe routes/onboarding.py. #}
+<div class="exercise-row">
+    <input type="text" name="ex_exercise" class="input ex-name"
+           placeholder="{{ t.profile.exercise }}" value="{{ ex.exercise or '' }}">
+    <input type="number" name="ex_sets" class="input ex-num" min="0" step="1"
+           placeholder="{{ t.profile.sets }}"
+           value="{% if ex.sets is not none %}{{ ex.sets }}{% endif %}">
+    <input type="number" name="ex_reps" class="input ex-num" min="0" step="1"
+           placeholder="{{ t.profile.reps }}"
+           value="{% if ex.reps is not none %}{{ ex.reps }}{% endif %}">
+    <input type="number" name="ex_weight" class="input ex-num" min="0" step="0.5"
+           placeholder="{{ t.profile.weight }}"
+           value="{% if ex.weight_kg is not none %}{{ ex.weight_kg }}{% endif %}">
+    {# Entfernt diese Zeile clientseitig per HTMX (kein Server-Roundtrip nötig). #}
+    <button type="button" class="btn-icon-remove"
+            aria-label="{{ t.common.remove }}"
+            hx-on:click="this.closest('.exercise-row').remove()">×</button>
+</div>

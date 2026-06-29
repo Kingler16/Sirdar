@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.settings.title }}{% endblock %}
+
+{% set integ = settings.get('integrations', {}) %}
+{% set fi = integ.get('file_import', {}) %}
+{% set wx = integ.get('weather_open_meteo', {}) %}
+{% set cal = integ.get('calendar_caldav', {}) %}
+{% set ah = integ.get('apple_health_push', {}) %}
+{% set gar = integ.get('garmin', {}) %}
+{% set strava = integ.get('strava', {}) %}
+{% set ors = integ.get('openrouteservice', {}) %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.settings.title }}</h1>
+    <p class="page-subtitle">{{ t.settings.subtitle }}</p>
+</section>
+
+{% if saved %}<div class="flash ok">{{ t.common.saved }}</div>{% endif %}
+
+<form method="post" action="/settings" class="stack">
+
+    <!-- ── Allgemein ────────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.settings.general }}</h2>
+        <div class="grid-2">
+            <div class="field">
+                <label for="locale">{{ t.settings.locale }}</label>
+                <select id="locale" name="locale" class="input">
+                    <option value="de" {% if settings.get('locale') == 'de' %}selected{% endif %}>Deutsch</option>
+                    <option value="en" {% if settings.get('locale') == 'en' %}selected{% endif %}>English</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="units">{{ t.settings.units }}</label>
+                <select id="units" name="units" class="input">
+                    <option value="metric" {% if settings.get('units') == 'metric' %}selected{% endif %}>{{ t.settings.units_metric }}</option>
+                    <option value="imperial" {% if settings.get('units') == 'imperial' %}selected{% endif %}>{{ t.settings.units_imperial }}</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Web-Server ───────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.settings.web }}</h2>
+        <div class="grid-2">
+            <div class="field">
+                <label for="web_host">{{ t.settings.host }}</label>
+                <input type="text" id="web_host" name="web_host" class="input"
+                       value="{{ settings.get('web', {}).get('host') or '' }}">
+            </div>
+            <div class="field">
+                <label for="web_port">{{ t.settings.port }}</label>
+                <input type="number" id="web_port" name="web_port" class="input" min="1" max="65535"
+                       value="{% if settings.get('web', {}).get('port') is not none %}{{ settings.get('web', {}).get('port') }}{% endif %}">
+            </div>
+        </div>
+    </section>
+
+    <!-- ── KI-Autonomie ─────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.settings.ai }}</h2>
+        <div class="field">
+            <label for="autonomy">{{ t.settings.autonomy }}</label>
+            <select id="autonomy" name="autonomy" class="input">
+                <option value="auto" {% if settings.get('ai', {}).get('autonomy') == 'auto' %}selected{% endif %}>{{ t.settings.autonomy_auto }}</option>
+                <option value="suggest" {% if settings.get('ai', {}).get('autonomy') == 'suggest' %}selected{% endif %}>{{ t.settings.autonomy_suggest }}</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- ── Integrationen ────────────────────────────────────── -->
+    <section class="card">
+        <h2 class="card-title">{{ t.settings.integrations }}</h2>
+
+        <!-- Datei-Import -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="file_import_enabled" {% if fi.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.file_import }}</span>
+            </label>
+        </div>
+
+        <!-- Wetter -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="weather_enabled" {% if wx.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.weather }}</span>
+            </label>
+            <div class="grid-2">
+                <div class="field">
+                    <label for="weather_latitude">{{ t.settings.latitude }}</label>
+                    <input type="number" id="weather_latitude" name="weather_latitude" class="input" step="any"
+                           value="{% if wx.get('latitude') is not none %}{{ wx.get('latitude') }}{% endif %}">
+                </div>
+                <div class="field">
+                    <label for="weather_longitude">{{ t.settings.longitude }}</label>
+                    <input type="number" id="weather_longitude" name="weather_longitude" class="input" step="any"
+                           value="{% if wx.get('longitude') is not none %}{{ wx.get('longitude') }}{% endif %}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Kalender (CalDAV) -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="calendar_enabled" {% if cal.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.calendar }}</span>
+            </label>
+            <div class="field">
+                <label for="calendar_url">{{ t.settings.url }}</label>
+                <input type="text" id="calendar_url" name="calendar_url" class="input" value="{{ cal.get('url') or '' }}">
+            </div>
+            <div class="grid-2">
+                <div class="field">
+                    <label for="calendar_username">{{ t.settings.username }}</label>
+                    <input type="text" id="calendar_username" name="calendar_username" class="input"
+                           autocomplete="off" value="{{ cal.get('username') or '' }}">
+                </div>
+                <div class="field">
+                    <label for="calendar_password">{{ t.settings.password }}</label>
+                    <input type="password" id="calendar_password" name="calendar_password" class="input"
+                           autocomplete="new-password" value="{{ cal.get('password') or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Apple Health -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="apple_health_enabled" {% if ah.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.apple_health }}</span>
+            </label>
+            <div class="field">
+                <label for="apple_health_secret">{{ t.settings.shared_secret }}</label>
+                <input type="password" id="apple_health_secret" name="apple_health_secret" class="input"
+                       autocomplete="new-password" value="{{ ah.get('shared_secret') or '' }}">
+            </div>
+        </div>
+
+        <!-- Garmin -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="garmin_enabled" {% if gar.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.garmin }}</span>
+            </label>
+            <div class="grid-2">
+                <div class="field">
+                    <label for="garmin_client_id">{{ t.settings.client_id }}</label>
+                    <input type="text" id="garmin_client_id" name="garmin_client_id" class="input"
+                           autocomplete="off" value="{{ gar.get('client_id') or '' }}">
+                </div>
+                <div class="field">
+                    <label for="garmin_client_secret">{{ t.settings.client_secret }}</label>
+                    <input type="password" id="garmin_client_secret" name="garmin_client_secret" class="input"
+                           autocomplete="new-password" value="{{ gar.get('client_secret') or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Strava (mit Warnhinweis) -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" id="strava_enabled" name="strava_enabled"
+                       {% if strava.get('enabled') %}checked{% endif %}
+                       onchange="document.getElementById('strava-warning').hidden = !this.checked">
+                <span>{{ t.settings.strava }}</span>
+            </label>
+            <div id="strava-warning" class="flash warn" {% if not strava.get('enabled') %}hidden{% endif %}>
+                {{ t.settings.strava_warning }}
+            </div>
+            <div class="grid-2">
+                <div class="field">
+                    <label for="strava_client_id">{{ t.settings.client_id }}</label>
+                    <input type="text" id="strava_client_id" name="strava_client_id" class="input"
+                           autocomplete="off" value="{{ strava.get('client_id') or '' }}">
+                </div>
+                <div class="field">
+                    <label for="strava_client_secret">{{ t.settings.client_secret }}</label>
+                    <input type="password" id="strava_client_secret" name="strava_client_secret" class="input"
+                           autocomplete="new-password" value="{{ strava.get('client_secret') or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenRouteService -->
+        <div class="integration">
+            <label class="check">
+                <input type="checkbox" name="ors_enabled" {% if ors.get('enabled') %}checked{% endif %}>
+                <span>{{ t.settings.openrouteservice }}</span>
+            </label>
+            <div class="field">
+                <label for="ors_api_key">{{ t.settings.api_key }}</label>
+                <input type="password" id="ors_api_key" name="ors_api_key" class="input"
+                       autocomplete="new-password" value="{{ ors.get('api_key') or '' }}">
+            </div>
+        </div>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">{{ t.common.save }}</button>
+    </div>
+</form>
+{% endblock %}

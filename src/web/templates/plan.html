@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.plan.title }}{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.plan.title }}</h1>
+    <p class="page-subtitle">{{ t.plan.subtitle }}</p>
+</section>
+
+<!-- Platzhalter — die präskriptive Plan-Ansicht (Rad-Intervalle / Kraft-Übungen) folgt in Phase 1 -->
+<section class="card placeholder-card">
+    <div class="placeholder-icon">▤</div>
+    <p class="card-lead">{{ t.plan.soon }}</p>
+    <p class="card-body">{{ t.plan.body }}</p>
+</section>
+{% endblock %}
