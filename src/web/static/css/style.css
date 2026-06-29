@@ -256,6 +256,15 @@ select.input {
 .badge-primary { background: var(--accent-soft); color: var(--accent); }
 .badge-muted { background: var(--bg-elev-2); color: var(--text-muted); }
 
+/* ── Import: Tabelle letzter Workouts ─────────────────────── */
+.table-wrap { overflow-x: auto; margin: 0 -4px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th, .data-table td { padding: 9px 10px; text-align: left; white-space: nowrap; }
+.data-table thead th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid var(--border); }
+.data-table tbody tr { border-top: 1px solid var(--border); }
+.data-table tbody tr:first-child { border-top: none; }
+.import-errors { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
 /* ── Responsive ───────────────────────────────────────────── */
 @media (min-width: 760px) {
     .bottom-nav { max-width: var(--maxw); margin: 0 auto; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid var(--border); }

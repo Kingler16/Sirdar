@@ -29,6 +29,9 @@ logs/
 .vscode/
 *.swp
 
+# Lokales Dev-Tooling (Preview-Server)
+.claude/launch.json
+
 # Test / coverage
 .pytest_cache/
 .coverage

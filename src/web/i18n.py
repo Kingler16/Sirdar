@@ -24,6 +24,7 @@ _TRANSLATIONS: dict[str, dict] = {
             "chat": "Coach",
             "profile": "Profil",
             "settings": "Einstellungen",
+            "import": "Import",
         },
         "common": {
             "loading": "Lädt…",
@@ -62,6 +63,28 @@ _TRANSLATIONS: dict[str, dict] = {
             "body": "Sobald dein Profil, deine Ziele und der Ist-Zustand erfasst sind, "
                     "erstellt der Coach hier präskriptive Einheiten — Rad mit Ziel-Watt/Zonen, "
                     "Kraft mit Gewicht × Sätze × Wdh.",
+        },
+        "imports": {
+            "title": "Trainingsdaten-Import",
+            "subtitle": "FIT/GPX-Dateien importieren — NP/IF/TSS werden automatisch berechnet",
+            "upload": "Dateien hochladen",
+            "choose_files": "FIT- oder GPX-Dateien wählen",
+            "upload_hint": "Mehrere Dateien möglich. Aus FIT-Power werden NP, IF und TSS "
+                           "berechnet (FTP aus deinem Profil). GPX ohne Power: nur Dauer/Distanz/HF.",
+            "do_import": "Importieren",
+            "summary_imported": "Importiert",
+            "summary_skipped": "Übersprungen",
+            "summary_errors": "Fehler",
+            "no_files": "Keine Dateien ausgewählt.",
+            "recent": "Letzte Workouts",
+            "no_workouts": "Noch keine Workouts importiert.",
+            "col_date": "Datum",
+            "col_sport": "Sportart",
+            "col_duration": "Dauer",
+            "col_distance": "Distanz",
+            "col_hr": "Ø-HF",
+            "col_source": "Quelle",
+            "dashboard_cta": "Trainingsdaten importieren",
         },
         "profile": {
             "title": "Profil",
@@ -180,6 +203,7 @@ _TRANSLATIONS: dict[str, dict] = {
             "chat": "Coach",
             "profile": "Profile",
             "settings": "Settings",
+            "import": "Import",
         },
         "common": {
             "loading": "Loading…",
@@ -218,6 +242,28 @@ _TRANSLATIONS: dict[str, dict] = {
             "body": "Once your profile, goals and current state are captured, the coach will "
                     "build prescriptive sessions here — cycling with target watts/zones, "
                     "strength with weight × sets × reps.",
+        },
+        "imports": {
+            "title": "Training data import",
+            "subtitle": "Import FIT/GPX files — NP/IF/TSS are computed automatically",
+            "upload": "Upload files",
+            "choose_files": "Choose FIT or GPX files",
+            "upload_hint": "Multiple files allowed. NP, IF and TSS are computed from FIT power "
+                           "(FTP from your profile). GPX without power: duration/distance/HR only.",
+            "do_import": "Import",
+            "summary_imported": "Imported",
+            "summary_skipped": "Skipped",
+            "summary_errors": "Errors",
+            "no_files": "No files selected.",
+            "recent": "Recent workouts",
+            "no_workouts": "No workouts imported yet.",
+            "col_date": "Date",
+            "col_sport": "Sport",
+            "col_duration": "Duration",
+            "col_distance": "Distance",
+            "col_hr": "Avg HR",
+            "col_source": "Source",
+            "dashboard_cta": "Import training data",
         },
         "profile": {
             "title": "Profile",

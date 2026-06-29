@@ -21,7 +21,7 @@
     "weekly_plan_hour": 18
   },
   "integrations": {
-    "file_import": { "enabled": true },
+    "file_import": { "enabled": true, "watch_dir": "" },
     "weather_open_meteo": { "enabled": false, "latitude": null, "longitude": null },
     "calendar_caldav": { "enabled": false, "url": "", "username": "", "password": "" },
     "apple_health_push": { "enabled": false, "shared_secret": "" },

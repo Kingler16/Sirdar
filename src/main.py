@@ -40,10 +40,35 @@ def run_web(host: str | None = None, port: int | None = None) -> None:
 
 
 def run_collect() -> None:
-    """Stub — Datensammlung (FIT/GPX, Health, Wetter, Kalender) folgt in Phase 1+."""
-    logger.info("=== SIRDAR COLLECT (Stub) ===")
-    logger.info("Noch nicht implementiert. Phase 1+: FIT/GPX-Import, Health-Push, "
-                "Open-Meteo, CalDAV → SQLite.")
+    """Datensammlung. Phase 1B: FIT/GPX-Import aus einem optionalen Watch-Verzeichnis.
+
+    Ist ``integrations.file_import`` aktiv und ein ``watch_dir`` gesetzt, werden alle
+    .fit/.gpx-Dateien aus diesem Ordner importiert (dedupliziert). Health-Push,
+    Open-Meteo und CalDAV folgen in Phase 2+.
+    """
+    logger.info("=== SIRDAR COLLECT ===")
+    settings = load_settings()
+    fi_cfg = (settings.get("integrations", {}) or {}).get("file_import", {}) or {}
+
+    if not fi_cfg.get("enabled"):
+        logger.info("file_import deaktiviert (settings.integrations.file_import.enabled) "
+                    "— nichts zu tun.")
+        return
+
+    watch_dir = fi_cfg.get("watch_dir")
+    if not watch_dir:
+        logger.info("Kein watch_dir konfiguriert (settings.integrations.file_import.watch_dir) "
+                    "— Datei-Import über die Web-Oberfläche (/import) nutzen.")
+        return
+
+    from src.data.store import import_dir
+
+    logger.info("Importiere FIT/GPX aus %s …", watch_dir)
+    summary = import_dir(watch_dir)
+    logger.info("Import fertig: %d importiert, %d übersprungen, %d Fehler.",
+                summary["imported"], summary["skipped"], summary["errors"])
+
+    # Health-Push, Open-Meteo, CalDAV folgen in Phase 2+ (KONZEPT §7).
 
 
 def run_plan() -> None:

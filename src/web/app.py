@@ -22,13 +22,14 @@ from fastapi.staticfiles import StaticFiles
 from src.core.claude import claude_available
 from src.web.deps import STATIC_DIR, ctx, resolve_lang, templates
 from src.web.i18n import SUPPORTED_LANGS
-from src.web.routes import onboarding_router
+from src.web.routes import imports_router, onboarding_router
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Sirdar")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(onboarding_router)
+app.include_router(imports_router)
 
 
 # ─── HTML Pages ──────────────────────────────────────────────

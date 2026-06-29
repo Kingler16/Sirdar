@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ t.app_name }} · {{ t.imports.title }}{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1 class="page-title">{{ t.imports.title }}</h1>
+    <p class="page-subtitle">{{ t.imports.subtitle }}</p>
+</section>
+
+{# ── Ergebnis-Zusammenfassung nach POST ───────────────────────────────── #}
+{% if summary is not none %}
+    {% if summary.imported or summary.skipped or summary.errors %}
+    <div class="flash ok">
+        {{ t.imports.summary_imported }}: {{ summary.imported }} ·
+        {{ t.imports.summary_skipped }}: {{ summary.skipped }}
+        {% if summary.errors %} · {{ t.imports.summary_errors }}: {{ summary.errors }}{% endif %}
+    </div>
+    {% else %}
+    <div class="flash warn">{{ t.imports.no_files }}</div>
+    {% endif %}
+    {% if summary.errors %}
+    <section class="card">
+        <h2 class="card-title">{{ t.imports.summary_errors }}</h2>
+        <ul class="import-errors">
+            {% for r in summary.results if r.status == 'error' %}
+            <li><strong>{{ r.raw_ref }}</strong>: {{ r.error }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+{% endif %}
+
+{# ── Upload-Formular ──────────────────────────────────────────────────── #}
+<section class="card">
+    <h2 class="card-title">{{ t.imports.upload }}</h2>
+    <form method="post" action="/import" enctype="multipart/form-data" class="stack">
+        <div class="field">
+            <label for="files">{{ t.imports.choose_files }}</label>
+            <input type="file" id="files" name="files" class="input"
+                   accept=".fit,.gpx" multiple>
+            <p class="field-hint">{{ t.imports.upload_hint }}</p>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">{{ t.imports.do_import }}</button>
+        </div>
+    </form>
+</section>
+
+{# ── Letzte Workouts ──────────────────────────────────────────────────── #}
+<section class="card">
+    <h2 class="card-title">{{ t.imports.recent }}</h2>
+    {% if workouts %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{{ t.imports.col_date }}</th>
+                    <th>{{ t.imports.col_sport }}</th>
+                    <th>{{ t.imports.col_duration }}</th>
+                    <th>{{ t.imports.col_distance }}</th>
+                    <th>NP</th>
+                    <th>IF</th>
+                    <th>TSS</th>
+                    <th>{{ t.imports.col_hr }}</th>
+                    <th>{{ t.imports.col_source }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in workouts %}
+                <tr>
+                    <td>{{ w.datum or '—' }}</td>
+                    <td>{{ w.sportart or '—' }}</td>
+                    <td>{% if w.dauer is not none %}{{ w.dauer }} min{% else %}—{% endif %}</td>
+                    <td>{% if w.distanz is not none %}{{ w.distanz }} km{% else %}—{% endif %}</td>
+                    <td>{% if w.np is not none %}{{ w.np }} W{% else %}—{% endif %}</td>
+                    <td>{{ w.if_ if w.if_ is not none else '—' }}</td>
+                    <td>{{ w.tss if w.tss is not none else '—' }}</td>
+                    <td>{% if w.avg_hr is not none %}{{ w.avg_hr }} bpm{% else %}—{% endif %}</td>
+                    <td>{{ w.quelle or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="card-body">{{ t.imports.no_workouts }}</p>
+    {% endif %}
+</section>
+{% endblock %}
