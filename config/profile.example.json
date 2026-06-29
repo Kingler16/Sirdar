@@ -1,0 +1,50 @@
+{
+  "_comment": "Athlete profile. Copy to profile.json (git-ignored). All values user-editable via onboarding.",
+  "name": "",
+  "birth_year": null,
+  "sex": null,
+  "height_cm": null,
+  "weight_kg": null,
+  "sports": {
+    "cycling": {
+      "enabled": true,
+      "experience": "intermediate",
+      "ftp_watts": null,
+      "ftp_test_date": null,
+      "hr_max": null,
+      "zone_model": "coggan7",
+      "indoor": true,
+      "outdoor": true,
+      "has_powermeter": false
+    },
+    "strength": {
+      "enabled": true,
+      "experience": "intermediate",
+      "preferred_split": "upper_lower",
+      "equipment": "gym",
+      "main_lifts": {
+        "squat_kg": null,
+        "deadlift_kg": null,
+        "bench_kg": null,
+        "overhead_press_kg": null
+      }
+    }
+  },
+  "goals": [
+    {
+      "id": "example",
+      "type": "ftp_increase",
+      "sport": "cycling",
+      "baseline": null,
+      "target": null,
+      "event_date": null,
+      "priority": "primary",
+      "horizon_weeks": 12
+    }
+  ],
+  "constraints": {
+    "weekly_hours_available": null,
+    "training_days": [],
+    "injuries_notes": ""
+  }
+}

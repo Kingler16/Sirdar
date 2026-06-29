@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+venv/
+.venv/
+env/
+
+# Secrets & runtime config (only *.example.json is committed)
+config/*.json
+!config/*.example.json
+.env
+*.token
+
+# Data & runtime state
+*.db
+*.sqlite
+*.sqlite3
+memory/
+logs/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/

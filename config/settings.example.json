@@ -1,0 +1,31 @@
+{
+  "_comment": "Copy to settings.json and fill in. settings.json is git-ignored.",
+  "locale": "de",
+  "units": "metric",
+  "claude": {
+    "oauth_token": "",
+    "model": "claude-opus-4-8",
+    "effort": "high"
+  },
+  "ai": {
+    "autonomy": "suggest",
+    "_autonomy_options": ["auto", "suggest"]
+  },
+  "schedule": {
+    "daily_collect_hour": 5,
+    "weekly_plan_day": "sunday",
+    "weekly_plan_hour": 18
+  },
+  "integrations": {
+    "file_import": { "enabled": true },
+    "weather_open_meteo": { "enabled": false, "latitude": null, "longitude": null },
+    "calendar_caldav": { "enabled": false, "url": "", "username": "", "password": "" },
+    "apple_health_push": { "enabled": false, "shared_secret": "" },
+    "garmin": { "enabled": false, "client_id": "", "client_secret": "" },
+    "strava": { "enabled": false, "client_id": "", "client_secret": "", "_warning": "Strava terms restrict AI use + require paid tier from 2026-06-30." },
+    "openrouteservice": { "enabled": false, "api_key": "" }
+  },
+  "notifications": {
+    "web_push": { "enabled": false, "vapid_public": "", "vapid_private": "", "subject": "" }
+  }
+}
