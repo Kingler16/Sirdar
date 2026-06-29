@@ -8,7 +8,7 @@
  * Push handlers follow in Phase 2/3.
  */
 
-const VERSION = 'sirdar-0.6.0';
+const VERSION = 'sirdar-0.7.0';
 const STATIC_CACHE = `sirdar-static-${VERSION}`;
 const RUNTIME_CACHE = `sirdar-runtime-${VERSION}`;
 

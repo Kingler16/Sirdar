@@ -19,7 +19,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.core.autoregulate import autoregulate_day
 from src.core.claude import claude_available
+from src.core.coach import get_plan_days
 from src.core.load import compute_load, get_load_series, latest_load, weekly_tss
 from src.core.readiness import readiness_for_date
 from src.data.store import health_series, recent_workouts
@@ -42,14 +44,23 @@ _CHART_DAYS = 90
 _RECENT_WORKOUTS = 5
 
 
+def _today_iso() -> str:
+    """Heutiges Datum als ISO-String (eigene Funktion → in Tests mockbar)."""
+    from datetime import date
+
+    return date.today().isoformat()
+
+
 # ─── HTML Pages ──────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    """Health-Overview-Dashboard: Readiness, Fitness/Form, Wochen-Load, Trends.
+    """Health-Overview-Dashboard: Readiness, Auto-Regulation, Fitness/Form, Trends.
 
     ``compute_load()`` wird beim Laden aufgerufen, damit die ``load``-Tabelle
     stets den aktuellen Workout-Stand widerspiegelt (idempotent, billig).
+    Ebenso wird ``autoregulate_day()`` für HEUTE aufgerufen (deterministisch,
+    idempotent), damit der angezeigte Plan/Status die Tagesform widerspiegelt.
     """
     compute_load()  # load-Tabelle aktualisieren (idempotent).
 
@@ -61,12 +72,24 @@ async def dashboard(request: Request):
         for r in trend_series
     )
 
+    # Heutige Auto-Regulation (idempotent, nur heute) — robust: nie crashend.
+    today = _today_iso()
+    try:
+        autoregulate_day(today)
+    except Exception:  # noqa: BLE001 — Auto-Regulation darf das Dashboard nie crashen
+        logger.warning("Auto-Regulation auf dem Dashboard übersprungen (Fehler).", exc_info=True)
+    today_plan = next(
+        (d for d in get_plan_days(from_date=today, days=1) if d["datum"] == today),
+        None,
+    )
+
     return templates.TemplateResponse(
         request, "dashboard.html",
         ctx(
             request, "dashboard",
             claude_ok=claude_available(),
             readiness=readiness,
+            today_plan=today_plan,
             load_series=load_series,
             latest=latest_load(),
             week_load=weekly_tss(days=7),

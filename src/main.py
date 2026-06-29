@@ -4,6 +4,7 @@ Modi:
   web      — startet das FastAPI-Dashboard (uvicorn)
   collect  — sammelt Trainings-/Health-Daten (Stub, Phase 1+)
   plan     — generiert/aktualisiert den Trainingsplan via Claude (Stub, Phase 1+)
+  regulate — passt die heutige Einheit an die Tagesform an (Readiness-Ampel, Cron)
 
 Aufruf: ``python -m src.main web`` (analog Velora src/main.py).
 """
@@ -134,12 +135,35 @@ def run_plan() -> None:
                 "Coach-System-Prompt) → plan_days.")
 
 
+def run_regulate() -> None:
+    """Tägliche Readiness-Auto-Regulation (KONZEPT §6.2) — für den Morgen-Cron.
+
+    Deterministisch & regelbasiert (kein Claude-Aufruf): passt die HEUTIGE geplante
+    Einheit an die Tagesform-Ampel an. Bei autonomy='auto' wird die Anpassung direkt
+    angewandt (status='adjusted'), bei 'suggest' nur vorgeschlagen (status='suggested',
+    Bestätigung in der Web-App). Idempotent — gefahrlos täglich ausführbar.
+    """
+    logger.info("=== SIRDAR REGULATE (Readiness-Auto-Regulation) ===")
+
+    from src.core.autoregulate import autoregulate_day
+
+    result = autoregulate_day()  # heutiger Tag, Autonomie aus settings
+    level = result.get("level")
+    if not result.get("changed"):
+        logger.info("Tag %s, Ampel '%s': keine Anpassung nötig (Plan unverändert).",
+                    result.get("date"), level)
+        return
+    logger.info("Tag %s, Ampel '%s': %s — %s",
+                result.get("date"), level, result.get("status"), result.get("reason"))
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Sirdar — KI-Trainings-Coach")
     parser.add_argument(
         "mode",
-        choices=["web", "collect", "plan"],
-        help="Modus: web (Dashboard), collect (Daten sammeln, Stub), plan (KI-Plan, Stub)",
+        choices=["web", "collect", "plan", "regulate"],
+        help="Modus: web (Dashboard), collect (Daten sammeln, Stub), plan (KI-Plan, Stub), "
+             "regulate (Readiness-Auto-Regulation, Cron)",
     )
     parser.add_argument("--host", help="Host für den Web-Modus (Override settings.web.host)")
     parser.add_argument("--port", "-p", type=int, help="Port für den Web-Modus (Override settings.web.port)")
@@ -151,6 +175,8 @@ def main(argv: list[str] | None = None) -> None:
         run_collect()
     elif args.mode == "plan":
         run_plan()
+    elif args.mode == "regulate":
+        run_regulate()
 
 
 if __name__ == "__main__":

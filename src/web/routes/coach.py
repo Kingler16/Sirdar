@@ -19,8 +19,9 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
+from src.core.autoregulate import apply_suggestion, autoregulate_day
 from src.core.claude import ClaudeCLIError, claude_available
 from src.core.coach import (
     HORIZONS,
@@ -44,8 +45,14 @@ _PLAN_VIEW_DAYS = 28
 def _plan_ctx(request: Request, **extra) -> dict:
     """Baut den Plan-Template-Kontext: aktueller Plan, Chat, Setup-Status, Coach-Status."""
     context = build_context()
-    plan_days = get_plan_days(days=_PLAN_VIEW_DAYS)
     today = context["today"]
+    # Heutige Auto-Regulation (deterministisch, idempotent) — robust: nie crashend,
+    # damit die Plan-Seite die Tagesform-Anpassung/-Vorschlag widerspiegelt.
+    try:
+        autoregulate_day(today)
+    except Exception:  # noqa: BLE001 — Auto-Regulation darf die Plan-Seite nie crashen
+        logger.warning("Auto-Regulation auf der Plan-Seite übersprungen (Fehler).", exc_info=True)
+    plan_days = get_plan_days(days=_PLAN_VIEW_DAYS)
     today_day = next((d for d in plan_days if d["datum"] == today), None)
     upcoming = [d for d in plan_days if d["datum"] > today]
 
@@ -106,3 +113,21 @@ async def plan_chat(request: Request, message: str = Form("")):
         request, "partials/plan_body.html",
         _plan_ctx(request, coach_msg=coach_msg, coach_error=coach_error, plan_updated=plan_updated),
     )
+
+
+@router.post("/plan/apply-suggestion", response_class=HTMLResponse)
+async def plan_apply_suggestion(request: Request, date: str = Form(...)):
+    """Bestätigt einen Auto-Regulations-Vorschlag (suggested → adjusted).
+
+    Für den „Bestätigen"-Button im 'suggest'-Modus: der zuvor hinterlegte Vorschlag
+    wird zum aktiven Workout befördert. HTMX-Aufruf (Plan-Seite) → Plan-Partial;
+    normaler Form-Post (Dashboard) → Redirect zurück (Referer oder /).
+    """
+    result = apply_suggestion(date)
+    if request.headers.get("hx-request"):
+        return templates.TemplateResponse(
+            request, "partials/plan_body.html",
+            _plan_ctx(request, suggestion_applied=result.get("changed", False)),
+        )
+    target = request.headers.get("referer") or "/"
+    return RedirectResponse(target, status_code=303)

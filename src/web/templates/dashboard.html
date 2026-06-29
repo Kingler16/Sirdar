@@ -59,6 +59,38 @@
     {% endif %}
 </section>
 
+{# ── Heutige Auto-Regulation (Phase 2B) ──────────────────────────────── #}
+{% if today_plan and today_plan.workout and today_plan.status in ('adjusted', 'suggested') %}
+{% set w = today_plan.workout %}
+<section class="card autoreg-card {{ today_plan.status }}">
+    <h2 class="card-title">
+        {{ t.dashboard.autoreg_title }}
+        {% if today_plan.status == 'adjusted' %}
+        <span class="status-badge adjusted">{{ t.plan.adjusted_badge }}</span>
+        {% else %}
+        <span class="status-badge suggested">{{ t.plan.suggested_badge }}</span>
+        {% endif %}
+    </h2>
+    {% if today_plan.status == 'adjusted' %}
+    <p class="card-body">{{ t.dashboard.autoreg_adjusted }}</p>
+    {% else %}
+    <p class="card-body">{{ t.dashboard.autoreg_suggested }}</p>
+    {% endif %}
+    {% if today_plan.anpassungsgrund %}
+    <p class="autoreg-reason">{{ today_plan.anpassungsgrund }}</p>
+    {% endif %}
+    <div class="form-actions">
+        {% if today_plan.status == 'suggested' %}
+        <form action="/plan/apply-suggestion" method="post" style="display:inline;">
+            <input type="hidden" name="date" value="{{ today_plan.datum }}">
+            <button type="submit" class="btn-primary btn-sm">{{ t.dashboard.autoreg_confirm }}</button>
+        </form>
+        {% endif %}
+        <a href="/plan" class="btn-secondary btn-sm">{{ t.dashboard.autoreg_to_plan }}</a>
+    </div>
+</section>
+{% endif %}
+
 {# ── Wochen-Load + aktuelle CTL/ATL/TSB-Kennzahlen ────────────────────── #}
 <section class="card">
     <h2 class="card-title">{{ t.dashboard.week_load }}</h2>

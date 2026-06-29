@@ -19,13 +19,15 @@
 
 {% macro day_card(d, is_today=False) %}
   {% set w = d.workout %}
-  <article class="plan-day {% if is_today %}is-today{% endif %} sport-{{ (w.sport if w else 'rest') }}">
+  <article class="plan-day {% if is_today %}is-today{% endif %} status-{{ d.status }} sport-{{ (w.sport if w else 'rest') }}">
     <header class="plan-day-head">
       <div class="plan-day-when">
         {% if is_today %}<span class="plan-today-badge">{{ t.plan.today }}</span>{% endif %}
         <span class="plan-date">{{ d.datum }}</span>
       </div>
       <div class="plan-day-tags">
+        {% if d.status == 'adjusted' %}<span class="status-badge adjusted">{{ t.plan.adjusted_badge }}</span>{% endif %}
+        {% if d.status == 'suggested' %}<span class="status-badge suggested">{{ t.plan.suggested_badge }}</span>{% endif %}
         {% if w and w.intensity %}
         <span class="intensity-pill {{ w.intensity }}">{{ t.plan['intensity_' + w.intensity] }}</span>
         {% endif %}
@@ -75,6 +77,28 @@
     {% if w and w.rationale %}
     <p class="plan-why"><span class="plan-why-label">{{ t.plan.why }}:</span> {{ w.rationale }}</p>
     {% endif %}
+
+    {# ── Auto-Regulation: Anpassungsgrund (adjusted) + Original-Hinweis ──── #}
+    {% if d.status == 'adjusted' and d.anpassungsgrund %}
+    <p class="autoreg-note"><span class="plan-why-label">{{ t.plan.autoreg_reason }}:</span> {{ d.anpassungsgrund }}</p>
+    {% if w and w.original and w.original.title %}
+    <p class="autoreg-original">{{ t.plan.autoreg_original }}: {{ w.original.title }}</p>
+    {% endif %}
+    {% endif %}
+
+    {# ── Auto-Regulation: Vorschlag (suggested) + Bestätigen-Button ──────── #}
+    {% if d.status == 'suggested' and w and w.suggestion %}
+    {% set s = w.suggestion %}
+    <div class="autoreg-suggestion">
+      <p class="autoreg-suggestion-lead">{{ t.plan.autoreg_suggestion_lead }}</p>
+      {% if d.anpassungsgrund %}<p class="autoreg-note">{{ d.anpassungsgrund }}</p>{% endif %}
+      <p class="autoreg-suggestion-title">{{ s.title or sport_label(s.sport) }}</p>
+      <form class="autoreg-confirm-form" hx-post="/plan/apply-suggestion"
+            hx-vals='{"date": "{{ d.datum }}"}' hx-target="#plan-body" hx-swap="outerHTML">
+        <button type="submit" class="btn-primary btn-sm">{{ t.plan.autoreg_confirm }}</button>
+      </form>
+    </div>
+    {% endif %}
   </article>
 {% endmacro %}
 
@@ -83,6 +107,9 @@
   {# ── Coach-Status-Banner (Antwort / Fehler / Plan aktualisiert) ───────── #}
   {% if plan_updated %}
   <div class="flash ok">{{ t.plan.plan_updated }}</div>
+  {% endif %}
+  {% if suggestion_applied %}
+  <div class="flash ok">{{ t.plan.suggestion_applied }}</div>
   {% endif %}
   {% if coach_error %}
   <div class="flash warn"><strong>{{ t.plan.error }}</strong><br>{{ coach_error }}</div>

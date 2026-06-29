@@ -70,6 +70,12 @@ _TRANSLATIONS: dict[str, dict] = {
             "flag_sleep_low": "Wenig Schlaf",
             "flag_soreness_high": "Hoher Muskelkater",
             "flag_mood_low": "Niedrige Stimmung",
+            # Auto-Regulation (Phase 2B)
+            "autoreg_title": "Heute angepasst",
+            "autoreg_adjusted": "Die heutige Einheit wurde automatisch an deine Tagesform angepasst.",
+            "autoreg_suggested": "Vorschlag: Die heutige Einheit an deine Tagesform anpassen.",
+            "autoreg_confirm": "Anpassung übernehmen",
+            "autoreg_to_plan": "Zum Plan",
             # Fitness/Form
             "fitness_form": "Fitness & Form",
             "fitness_form_sub": "CTL (Fitness), ATL (Fatigue), TSB (Form) über 90 Tage",
@@ -163,6 +169,14 @@ _TRANSLATIONS: dict[str, dict] = {
             "claude_missing_body": "Installiere die Claude Code CLI und hinterlege einen OAuth-Token "
                                    "(claude setup-token), damit der Coach Pläne erstellen kann.",
             "error": "Der Coach konnte gerade nicht antworten.",
+            # Auto-Regulation (Phase 2B)
+            "adjusted_badge": "angepasst",
+            "suggested_badge": "Vorschlag",
+            "autoreg_reason": "Tagesform-Anpassung",
+            "autoreg_suggestion_lead": "Vorschlag des Coaches zur Tagesform:",
+            "autoreg_confirm": "Anpassung übernehmen",
+            "autoreg_original": "Ursprünglich geplant",
+            "suggestion_applied": "Anpassung übernommen ✓",
         },
         "imports": {
             "title": "Trainingsdaten-Import",
@@ -357,6 +371,12 @@ _TRANSLATIONS: dict[str, dict] = {
             "flag_sleep_low": "Low sleep",
             "flag_soreness_high": "High soreness",
             "flag_mood_low": "Low mood",
+            # Auto-regulation (Phase 2B)
+            "autoreg_title": "Adjusted today",
+            "autoreg_adjusted": "Today's session was automatically adjusted to your daily form.",
+            "autoreg_suggested": "Suggestion: adjust today's session to your daily form.",
+            "autoreg_confirm": "Apply adjustment",
+            "autoreg_to_plan": "Go to plan",
             # Fitness/Form
             "fitness_form": "Fitness & Form",
             "fitness_form_sub": "CTL (fitness), ATL (fatigue), TSB (form) over 90 days",
@@ -450,6 +470,14 @@ _TRANSLATIONS: dict[str, dict] = {
             "claude_missing_body": "Install the Claude Code CLI and set an OAuth token "
                                    "(claude setup-token) so the coach can build plans.",
             "error": "The coach couldn't respond right now.",
+            # Auto-regulation (Phase 2B)
+            "adjusted_badge": "adjusted",
+            "suggested_badge": "suggestion",
+            "autoreg_reason": "Daily-form adjustment",
+            "autoreg_suggestion_lead": "Coach's suggestion for your daily form:",
+            "autoreg_confirm": "Apply adjustment",
+            "autoreg_original": "Originally planned",
+            "suggestion_applied": "Adjustment applied ✓",
         },
         "imports": {
             "title": "Training data import",
