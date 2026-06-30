@@ -9,11 +9,13 @@ tmp-Verzeichnis kopiert, damit der Fallback (load_* ohne echte Datei) greift.
 import json
 import shutil
 
+import httpx
 import pytest
 from starlette.testclient import TestClient
 
 from src import config
 from src.web.app import app
+from src.web.routes import geocode as geocode_route
 
 client = TestClient(app)
 
@@ -56,6 +58,139 @@ def test_settings_renders():
     assert r.status_code == 200
     # Strava-Warnhinweis muss im Markup vorhanden sein (DE-Default).
     assert "Strava" in r.text
+
+
+# ─── Settings-Integrations-UX (Standort-Button, Anleitungen, Badges) ─────────
+
+def test_settings_has_geolocate_button_de():
+    """Wetter-Block hat den Standort-Button + die geladene Geolocation-JS (DE)."""
+    r = client.get("/settings")
+    assert r.status_code == 200
+    assert 'id="weather-geolocate"' in r.text
+    assert "Meinen Standort verwenden" in r.text  # DE-Label
+    assert "/static/js/geolocate.js" in r.text     # JS eingebunden
+
+
+def _en_client() -> TestClient:
+    """TestClient mit gesetztem EN-Sprach-Cookie (auf Client-Instanz, nicht per Request)."""
+    c = TestClient(app)
+    c.cookies.set("sirdar_lang", "en")
+    return c
+
+
+def test_settings_has_geolocate_button_en():
+    """Englische Sprache: Button trägt das EN-Label."""
+    r = _en_client().get("/settings")
+    assert r.status_code == 200
+    assert 'id="weather-geolocate"' in r.text
+    assert "Use my location" in r.text
+
+
+def test_settings_apple_calendar_renamed():
+    """Kalender-Block ist auf Apple Kalender (iCloud) ausgerichtet + CalDAV-Advanced."""
+    r_de = client.get("/settings")
+    assert "Apple Kalender (iCloud)" in r_de.text
+    # CalDAV bleibt als Fortgeschritten-Option erhalten (URL + user + pass).
+    assert "Fortgeschritten" in r_de.text
+    assert 'name="calendar_username"' in r_de.text
+    assert 'name="calendar_password"' in r_de.text
+    r_en = _en_client().get("/settings")
+    assert "Apple Calendar (iCloud)" in r_en.text
+
+
+def test_settings_setup_guides_present_de():
+    """Aufklappbare Anleitungen + Status-Badges für alle Integrationen (DE)."""
+    r = client.get("/settings")
+    text = r.text
+    # Status-Badges
+    assert "Verfügbar" in text                 # Wetter + Apple Kalender
+    assert "Phase 3 – in Arbeit" in text       # Health/Garmin/Strava/ORS
+    # Aufklapp-Anleitung-Überschrift
+    assert "So richtest du das ein" in text
+    # Je-Integration-Anleitungstexte (Stichproben)
+    assert "openrouteservice.org/dev" in text  # ORS-Step
+    assert "strava.com/settings/api" in text   # Strava-Step
+    assert "appleid.apple.com" in text         # Kalender-CalDAV-Hinweis
+
+
+def test_settings_setup_guides_present_en():
+    """Anleitungen + Badges auch auf Englisch vorhanden."""
+    r = _en_client().get("/settings")
+    text = r.text
+    assert "Available" in text
+    assert "Phase 3 – in progress" in text
+    assert "How to set this up" in text
+    assert "openrouteservice.org/dev" in text
+
+
+# ─── Reverse-Geocode-Endpoint (Nominatim, gemockt — keine echten Netz-Calls) ─
+
+# Kanonische Nominatim-Reverse-Antwort (gekürzt).
+_NOMINATIM_RESPONSE = {
+    "display_name": "München, Bayern, Deutschland",
+    "address": {
+        "city": "München",
+        "state": "Bayern",
+        "country": "Deutschland",
+    },
+}
+
+
+class _FakeResponse:
+    def __init__(self, payload, status=200):
+        self._payload = payload
+        self.status_code = status
+
+    def json(self):
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError("err", request=None, response=None)
+
+
+def test_reverse_geocode_returns_city(monkeypatch):
+    """Erfolgsfall: Endpoint liefert den Ortsnamen aus der Nominatim-Antwort."""
+    calls = {}
+
+    def fake_get(url, params=None, headers=None, timeout=None, **kw):
+        calls["url"] = url
+        calls["params"] = params
+        calls["headers"] = headers
+        return _FakeResponse(_NOMINATIM_RESPONSE)
+
+    monkeypatch.setattr(geocode_route.httpx, "get", fake_get)
+
+    r = client.get("/api/geocode/reverse", params={"lat": 48.1, "lon": 11.5})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["name"] == "München"
+    assert body["lat"] == 48.1
+    assert body["lon"] == 11.5
+    # User-Agent „Sirdar" muss gesetzt sein (Nominatim-Policy).
+    assert calls["headers"]["User-Agent"] == "Sirdar"
+
+
+def test_reverse_geocode_network_error_is_graceful(monkeypatch):
+    """Netzfehler → name null, weiterhin 200 (kein Crash)."""
+    def boom(*a, **kw):
+        raise httpx.ConnectError("no network")
+
+    monkeypatch.setattr(geocode_route.httpx, "get", boom)
+    r = client.get("/api/geocode/reverse", params={"lat": 48.1, "lon": 11.5})
+    assert r.status_code == 200
+    assert r.json()["name"] is None
+
+
+def test_reverse_geocode_empty_address_is_graceful(monkeypatch):
+    """Antwort ohne verwertbaren Ort → name null (graceful)."""
+    def fake_get(*a, **kw):
+        return _FakeResponse({"address": {}})
+
+    monkeypatch.setattr(geocode_route.httpx, "get", fake_get)
+    r = client.get("/api/geocode/reverse", params={"lat": 0.0, "lon": 0.0})
+    assert r.status_code == 200
+    assert r.json()["name"] is None
 
 
 def test_exercise_row_partial():

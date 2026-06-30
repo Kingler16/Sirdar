@@ -104,10 +104,23 @@
 
         <!-- Wetter -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" name="weather_enabled" {% if wx.get('enabled') %}checked{% endif %}>
-                <span>{{ t.settings.weather }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" name="weather_enabled" {% if wx.get('enabled') %}checked{% endif %}>
+                    <span>{{ t.settings.weather }}</span>
+                </label>
+                <span class="int-badge ok">{{ t.settings.status_available }}</span>
+            </div>
+            <div class="geo-actions">
+                <button type="button" class="btn-secondary btn-sm" id="weather-geolocate"
+                        data-locating="{{ t.settings.geo_locating }}"
+                        data-detected="{{ t.settings.geo_detected }}"
+                        data-coords-set="{{ t.settings.geo_coords_set }}"
+                        data-unsupported="{{ t.settings.geo_unsupported }}"
+                        data-denied="{{ t.settings.geo_denied }}"
+                        data-error="{{ t.settings.geo_error }}">{{ t.settings.use_my_location }}</button>
+                <span id="weather-geo-status" class="geo-status" hidden></span>
+            </div>
             <div class="grid-2">
                 <div class="field">
                     <label for="weather_latitude">{{ t.settings.latitude }}</label>
@@ -120,51 +133,80 @@
                            value="{% if wx.get('longitude') is not none %}{{ wx.get('longitude') }}{% endif %}">
                 </div>
             </div>
+            <p class="field-hint">{{ t.settings.coords_optional }}</p>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p>{{ t.settings.setup_weather }}</p>
+            </details>
         </div>
 
-        <!-- Kalender (CalDAV) -->
+        <!-- Apple Kalender (iCloud .ics primär, CalDAV als Fortgeschritten) -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" name="calendar_enabled" {% if cal.get('enabled') %}checked{% endif %}>
-                <span>{{ t.settings.calendar }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" name="calendar_enabled" {% if cal.get('enabled') %}checked{% endif %}>
+                    <span>{{ t.settings.calendar }}</span>
+                </label>
+                <span class="int-badge ok">{{ t.settings.status_available }}</span>
+            </div>
             <div class="field">
                 <label for="calendar_url">{{ t.settings.url }}</label>
-                <input type="text" id="calendar_url" name="calendar_url" class="input" value="{{ cal.get('url') or '' }}">
+                <input type="text" id="calendar_url" name="calendar_url" class="input"
+                       placeholder="webcal://… / https://…" value="{{ cal.get('url') or '' }}">
+                <p class="field-hint">{{ t.settings.setup_calendar_ics_title }} — {{ t.settings.setup_calendar_ics }}</p>
             </div>
-            <div class="grid-2">
-                <div class="field">
-                    <label for="calendar_username">{{ t.settings.username }}</label>
-                    <input type="text" id="calendar_username" name="calendar_username" class="input"
-                           autocomplete="off" value="{{ cal.get('username') or '' }}">
+            <details class="advanced-block" {% if cal.get('username') or cal.get('password') %}open{% endif %}>
+                <summary>{{ t.settings.calendar_advanced }}</summary>
+                <p class="field-hint">{{ t.settings.setup_calendar_caldav_title }} — {{ t.settings.setup_calendar_caldav }}</p>
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="calendar_username">{{ t.settings.username }}</label>
+                        <input type="text" id="calendar_username" name="calendar_username" class="input"
+                               autocomplete="off" value="{{ cal.get('username') or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="calendar_password">{{ t.settings.password }}</label>
+                        <input type="password" id="calendar_password" name="calendar_password" class="input"
+                               autocomplete="new-password" value="{{ cal.get('password') or '' }}">
+                    </div>
                 </div>
-                <div class="field">
-                    <label for="calendar_password">{{ t.settings.password }}</label>
-                    <input type="password" id="calendar_password" name="calendar_password" class="input"
-                           autocomplete="new-password" value="{{ cal.get('password') or '' }}">
-                </div>
-            </div>
+            </details>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p><strong>{{ t.settings.setup_calendar_ics_title }}</strong><br>{{ t.settings.setup_calendar_ics }}</p>
+                <p><strong>{{ t.settings.setup_calendar_caldav_title }}</strong><br>{{ t.settings.setup_calendar_caldav }}</p>
+            </details>
         </div>
 
         <!-- Apple Health -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" name="apple_health_enabled" {% if ah.get('enabled') %}checked{% endif %}>
-                <span>{{ t.settings.apple_health }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" name="apple_health_enabled" {% if ah.get('enabled') %}checked{% endif %}>
+                    <span>{{ t.settings.apple_health }}</span>
+                </label>
+                <span class="int-badge wip">{{ t.settings.status_phase3 }}</span>
+            </div>
             <div class="field">
                 <label for="apple_health_secret">{{ t.settings.shared_secret }}</label>
                 <input type="password" id="apple_health_secret" name="apple_health_secret" class="input"
                        autocomplete="new-password" value="{{ ah.get('shared_secret') or '' }}">
             </div>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p>{{ t.settings.setup_apple_health }}</p>
+            </details>
         </div>
 
         <!-- Garmin -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" name="garmin_enabled" {% if gar.get('enabled') %}checked{% endif %}>
-                <span>{{ t.settings.garmin }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" name="garmin_enabled" {% if gar.get('enabled') %}checked{% endif %}>
+                    <span>{{ t.settings.garmin }}</span>
+                </label>
+                <span class="int-badge wip">{{ t.settings.status_phase3 }}</span>
+            </div>
             <div class="grid-2">
                 <div class="field">
                     <label for="garmin_client_id">{{ t.settings.client_id }}</label>
@@ -177,16 +219,23 @@
                            autocomplete="new-password" value="{{ gar.get('client_secret') or '' }}">
                 </div>
             </div>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p>{{ t.settings.setup_garmin }}</p>
+            </details>
         </div>
 
         <!-- Strava (mit Warnhinweis) -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" id="strava_enabled" name="strava_enabled"
-                       {% if strava.get('enabled') %}checked{% endif %}
-                       onchange="document.getElementById('strava-warning').hidden = !this.checked">
-                <span>{{ t.settings.strava }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" id="strava_enabled" name="strava_enabled"
+                           {% if strava.get('enabled') %}checked{% endif %}
+                           onchange="document.getElementById('strava-warning').hidden = !this.checked">
+                    <span>{{ t.settings.strava }}</span>
+                </label>
+                <span class="int-badge wip">{{ t.settings.status_phase3 }}</span>
+            </div>
             <div id="strava-warning" class="flash warn" {% if not strava.get('enabled') %}hidden{% endif %}>
                 {{ t.settings.strava_warning }}
             </div>
@@ -202,19 +251,30 @@
                            autocomplete="new-password" value="{{ strava.get('client_secret') or '' }}">
                 </div>
             </div>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p>{{ t.settings.setup_strava }}</p>
+            </details>
         </div>
 
         <!-- OpenRouteService -->
         <div class="integration">
-            <label class="check">
-                <input type="checkbox" name="ors_enabled" {% if ors.get('enabled') %}checked{% endif %}>
-                <span>{{ t.settings.openrouteservice }}</span>
-            </label>
+            <div class="integration-head">
+                <label class="check">
+                    <input type="checkbox" name="ors_enabled" {% if ors.get('enabled') %}checked{% endif %}>
+                    <span>{{ t.settings.openrouteservice }}</span>
+                </label>
+                <span class="int-badge wip">{{ t.settings.status_phase3 }}</span>
+            </div>
             <div class="field">
                 <label for="ors_api_key">{{ t.settings.api_key }}</label>
                 <input type="password" id="ors_api_key" name="ors_api_key" class="input"
                        autocomplete="new-password" value="{{ ors.get('api_key') or '' }}">
             </div>
+            <details class="setup-guide">
+                <summary>{{ t.settings.setup_howto }}</summary>
+                <p>{{ t.settings.setup_ors }}</p>
+            </details>
         </div>
     </section>
 
@@ -222,4 +282,8 @@
         <button type="submit" class="btn-primary">{{ t.common.save }}</button>
     </div>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/geolocate.js" defer></script>
 {% endblock %}

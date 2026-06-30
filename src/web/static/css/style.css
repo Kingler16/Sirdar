@@ -259,6 +259,62 @@ select.input {
 .integration { padding: 14px 0; border-top: 1px solid var(--border); }
 .integration:first-of-type { border-top: none; padding-top: 6px; }
 
+/* Kopfzeile je Integration: Checkbox links, Status-Badge rechts. */
+.integration-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 6px;
+}
+.integration-head .check { margin-bottom: 0; }
+
+/* Status-Badges (Verfügbar / Phase 3). Eigene Klasse, um nicht mit
+   .status-badge (Auto-Regulation) zu kollidieren. */
+.int-badge {
+    flex: 0 0 auto;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.int-badge.ok  { background: var(--ok-soft); color: var(--ok); }
+.int-badge.wip { background: var(--warn-soft); color: var(--warn); }
+
+/* Standort-Button + Erkannt-Status (Wetter). */
+.geo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 4px 0 12px; }
+.geo-status { font-size: 13px; color: var(--text-muted); }
+.geo-status.ok  { color: var(--ok); }
+.geo-status.bad { color: var(--bad); }
+.geo-status[hidden] { display: none; }
+
+/* Aufklappbare Setup-Anleitungen (<details>) und Fortgeschritten-Block. */
+.setup-guide, .advanced-block {
+    margin-top: 10px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.setup-guide > summary, .advanced-block > summary {
+    cursor: pointer; list-style: none;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    padding: 10px 12px;
+}
+.setup-guide > summary::-webkit-details-marker,
+.advanced-block > summary::-webkit-details-marker { display: none; }
+.setup-guide > summary::before, .advanced-block > summary::before {
+    content: "▸"; display: inline-block; margin-right: 8px;
+    color: var(--text-muted); transition: transform 0.15s ease;
+}
+.setup-guide[open] > summary::before, .advanced-block[open] > summary::before {
+    transform: rotate(90deg);
+}
+.setup-guide > p, .advanced-block > p, .advanced-block > .grid-2 {
+    margin: 0 12px 12px;
+}
+.setup-guide > p {
+    font-size: 13px; line-height: 1.55; color: var(--text-muted);
+}
+.setup-guide > p + p { margin-top: 8px; }
+.advanced-block > .field-hint { margin: 0 12px 10px; }
+
 /* ── Goals ────────────────────────────────────────────────── */
 .goal-list { list-style: none; margin: 0; padding: 0; }
 .goal-item { padding: 14px 0; border-top: 1px solid var(--border); }

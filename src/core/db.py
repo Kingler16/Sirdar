@@ -10,13 +10,22 @@ Config (Profil, Ziele, Settings) liegt als JSON in config/ (siehe src/config.py)
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# training.db liegt im Projekt-Root (parallel zu src/). Per .gitignore (*.db).
-DB_PATH = Path(__file__).resolve().parent.parent.parent / "training.db"
+# Standard: training.db im Projekt-Root (parallel zu src/, per .gitignore *.db).
+# Über die Env-Variable SIRDAR_DB_PATH überschreibbar — wichtig, wenn das Projekt
+# auf einem langsamen Netzlaufwerk (NAS) liegt: dann die DB auf lokale Platte legen
+# (z. B. ~/.sirdar/training.db) für drastisch schnellere I/O.
+_DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent.parent / "training.db"
+DB_PATH = (
+    Path(os.environ["SIRDAR_DB_PATH"]).expanduser()
+    if os.environ.get("SIRDAR_DB_PATH")
+    else _DEFAULT_DB_PATH
+)
 
 
 def get_connection(db_path: Path | str | None = None) -> sqlite3.Connection:
@@ -123,9 +132,24 @@ EXPECTED_TABLES = (
 )
 
 
-def init_db(db_path: Path | str | None = None) -> Path:
-    """Legt das vollständige Schema an (idempotent) und gibt den DB-Pfad zurück."""
+# Pfade, deren Schema in DIESEM Prozess bereits angelegt wurde.
+# Verhindert, dass das teure executescript (CREATE TABLE …) bei jedem der vielen
+# init_db()-Aufrufe pro Request erneut läuft — entscheidend für die Performance,
+# wenn die DB auf einem langsamen Netzlaufwerk (NAS) liegt.
+_INITIALIZED: set[str] = set()
+
+
+def init_db(db_path: Path | str | None = None, force: bool = False) -> Path:
+    """Legt das vollständige Schema an und gibt den DB-Pfad zurück.
+
+    Das teure ``executescript`` läuft pro Pfad nur EINMAL je Prozess (gecacht via
+    ``_INITIALIZED``); weitere Aufrufe sind ein billiger Set-Check. ``force=True``
+    erzwingt die Neuanlage (z. B. Tests). Idempotent (CREATE TABLE IF NOT EXISTS).
+    """
     path = Path(db_path) if db_path else DB_PATH
+    key = str(path)
+    if not force and key in _INITIALIZED:
+        return path
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection(path)
     try:
@@ -133,6 +157,7 @@ def init_db(db_path: Path | str | None = None) -> Path:
         conn.commit()
     finally:
         conn.close()
+    _INITIALIZED.add(key)
     logger.info("SQLite-Schema initialisiert: %s", path)
     return path
 

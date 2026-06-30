@@ -296,7 +296,7 @@ _TRANSLATIONS: dict[str, dict] = {
             "weather": "Wetter (Open-Meteo)",
             "latitude": "Breitengrad",
             "longitude": "Längengrad",
-            "calendar": "Kalender (CalDAV)",
+            "calendar": "Apple Kalender (iCloud)",
             "url": "URL",
             "username": "Benutzername",
             "password": "Passwort",
@@ -311,6 +311,42 @@ _TRANSLATIONS: dict[str, dict] = {
                               "Aktivierung & rechtliche Verantwortung liegen bei dir.",
             "openrouteservice": "OpenRouteService (Routen)",
             "api_key": "API-Key",
+            # ── Status-Badges für Integrationen ──────────────────
+            "status_available": "Verfügbar",
+            "status_phase3": "Phase 3 – in Arbeit",
+            # ── Geolocation (Wetter) ─────────────────────────────
+            "use_my_location": "📍 Meinen Standort verwenden",
+            "coords_optional": "Optional/Fallback — wird vom Standort-Button automatisch gefüllt.",
+            "geo_locating": "Standort wird ermittelt …",
+            "geo_detected": "Erkannt",
+            "geo_coords_set": "Koordinaten übernommen — zum Sichern bitte speichern.",
+            "geo_unsupported": "Geolocation wird von diesem Browser nicht unterstützt.",
+            "geo_denied": "Standortzugriff verweigert. Koordinaten manuell eintragen.",
+            "geo_error": "Standort konnte nicht ermittelt werden. Koordinaten manuell eintragen.",
+            # ── Setup-Anleitungen (aufklappbar) ──────────────────
+            "setup_howto": "So richtest du das ein",
+            "setup_weather": "Standort-Button drücken (oder Koordinaten manuell eintragen) → "
+                             "speichern. Kostenlos, kein API-Key. Open-Meteo liefert dann den "
+                             "Forecast für Outdoor-/Indoor-Entscheidungen.",
+            "setup_calendar_ics_title": "Empfohlen: iCloud-Freigabe-Link (.ics)",
+            "setup_calendar_ics": "Kalender-App (Mac) öffnen → Rechtsklick auf den Kalender → "
+                                  "„Öffentlicher Kalender“ aktivieren → Link kopieren (beginnt mit "
+                                  "webcal:// oder https://) → oben ins URL-Feld einfügen → speichern. "
+                                  "Read-only, kein Passwort nötig.",
+            "setup_calendar_caldav_title": "Alternative: CalDAV (Fortgeschritten)",
+            "setup_calendar_caldav": "Für Schreib-/Vollzugriff: App-spezifisches Passwort auf "
+                                     "appleid.apple.com erstellen → CalDAV-URL, Apple-ID und das "
+                                     "App-Passwort unten unter „Fortgeschritten“ eintragen.",
+            "calendar_advanced": "Fortgeschritten: CalDAV (URL + Benutzer + Passwort)",
+            "setup_apple_health": "Vorschau: Per iOS-Kurzbefehl HRV, Schlaf, Ruhepuls und Workouts "
+                                  "automatisch an Sirdar senden. Details folgen, sobald der "
+                                  "Push-Endpoint live ist (Phase 3).",
+            "setup_garmin": "Garmins offizielle API ist business-gated (Health/Activity API auf "
+                            "Antrag). Setup-Schritte folgen in Phase 3.",
+            "setup_strava": "Vorschau: App auf strava.com/settings/api anlegen → Client-ID und "
+                            "Client-Secret kopieren → hier eintragen.",
+            "setup_ors": "Kostenlosen API-Key auf openrouteservice.org/dev erstellen → hier "
+                         "eintragen. Für Routen-/Streckenvorschläge (Phase 3).",
         },
     },
     # ── English ───────────────────────────────────────────────────────
@@ -597,7 +633,7 @@ _TRANSLATIONS: dict[str, dict] = {
             "weather": "Weather (Open-Meteo)",
             "latitude": "Latitude",
             "longitude": "Longitude",
-            "calendar": "Calendar (CalDAV)",
+            "calendar": "Apple Calendar (iCloud)",
             "url": "URL",
             "username": "Username",
             "password": "Password",
@@ -612,6 +648,42 @@ _TRANSLATIONS: dict[str, dict] = {
                               "responsibility are yours.",
             "openrouteservice": "OpenRouteService (routes)",
             "api_key": "API key",
+            # ── Integration status badges ────────────────────────
+            "status_available": "Available",
+            "status_phase3": "Phase 3 – in progress",
+            # ── Geolocation (weather) ────────────────────────────
+            "use_my_location": "📍 Use my location",
+            "coords_optional": "Optional/fallback — filled automatically by the location button.",
+            "geo_locating": "Locating …",
+            "geo_detected": "Detected",
+            "geo_coords_set": "Coordinates set — hit save to persist.",
+            "geo_unsupported": "Geolocation is not supported by this browser.",
+            "geo_denied": "Location access denied. Enter coordinates manually.",
+            "geo_error": "Could not determine location. Enter coordinates manually.",
+            # ── Setup guides (collapsible) ───────────────────────
+            "setup_howto": "How to set this up",
+            "setup_weather": "Press the location button (or enter coordinates manually) → save. "
+                             "Free, no API key. Open-Meteo then provides the forecast for "
+                             "outdoor/indoor decisions.",
+            "setup_calendar_ics_title": "Recommended: iCloud share link (.ics)",
+            "setup_calendar_ics": "Open the Calendar app (Mac) → right-click the calendar → enable "
+                                  "“Public Calendar” → copy the link (starts with webcal:// or "
+                                  "https://) → paste it into the URL field above → save. Read-only, "
+                                  "no password needed.",
+            "setup_calendar_caldav_title": "Alternative: CalDAV (advanced)",
+            "setup_calendar_caldav": "For write/full access: create an app-specific password at "
+                                     "appleid.apple.com → enter the CalDAV URL, your Apple ID and "
+                                     "the app password under “Advanced” below.",
+            "calendar_advanced": "Advanced: CalDAV (URL + user + password)",
+            "setup_apple_health": "Preview: send HRV, sleep, resting HR and workouts to Sirdar "
+                                  "automatically via an iOS Shortcut. Details follow once the push "
+                                  "endpoint is live (Phase 3).",
+            "setup_garmin": "Garmin's official API is business-gated (Health/Activity API on "
+                            "request). Setup steps follow in Phase 3.",
+            "setup_strava": "Preview: create an app at strava.com/settings/api → copy the Client ID "
+                            "and Client Secret → enter them here.",
+            "setup_ors": "Create a free API key at openrouteservice.org/dev → enter it here. For "
+                         "route/course suggestions (Phase 3).",
         },
     },
 }
